@@ -1,0 +1,15 @@
+language: cpp
+
+before_install:
+ - sudo apt-get update -q
+ - sudo apt-get install libcppunit-dev -y
+ - sudo apt-get install libsqlite3-dev -y
+
+script: 
+ - mkdir -p ./build/gcc/Debug
+ - mkdir -p ./build/gcc/Release
+ - cd build/gcc/Debug
+ - cmake .. -DCMAKE_BUILD_TYPE=Debug
+ - make
+ - ./saturnin-test
+ 
