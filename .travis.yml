@@ -9,7 +9,7 @@ script:
  - mkdir -p ./build/gcc/Debug
  - mkdir -p ./build/gcc/Release
  - cd build/gcc/Debug
- - cmake .. -DCMAKE_BUILD_TYPE=Debug
+ - cmake ../../.. -DCMAKE_BUILD_TYPE=Debug
  - make
  - ./saturnin-test
  
