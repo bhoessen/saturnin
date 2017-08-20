@@ -1588,7 +1588,7 @@ void Solver::exportClause(Array<Lit>& c, unsigned int lbd){
     }else{
         for(unsigned int i = 0; i<parallelData->solvers.getSize(); i++){
             if(i==threadId) continue;
-            Clause* toExport = exchangedClauses.createClause(c,lbd);
+            Clause* toExport = exchangedClauses.retrieveClause((Lit*)c, c.getSize(), lbd);
             unsigned int nextPos = (parallelData->freeNonIncludedClause[i][threadId]);
             parallelData->exchangedClauses[i][threadId][nextPos] = toExport;
             parallelData->freeNonIncludedClause[i][threadId] = (nextPos+1)%parallelData->maxNbExchanged;
@@ -1668,7 +1668,7 @@ bool Solver::importClause(Clause* c){
     ASSERT(c->getSize() <= initialSize);
     
     //make sure we can re-use the allocated memory if we can
-    this->exchangedClauses.releaseClause(c);
+    this->exchangedClauses.provideClause(c);
     
     return state != wFalse;
 }

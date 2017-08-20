@@ -99,8 +99,37 @@ Clause* ClauseAllocator::createClause(const Lit * const lits, unsigned int sz, u
     return c;
 }
 
+Clause* ClauseAllocator::retrieveClause(const Lit * const lits, unsigned int sz, unsigned int lbd) {
+    ASSERT(lits != nullptr);
+    ASSERT(sz > 1);
+    unsigned int idx = getIndex(sz);
+    if (idx >= pools.getSize()) {
+        for (unsigned int i = pools.getSize(); i <= idx; i++) {
+            pools.push(new PoolList(getMaxSizeForIndex(i), initialPoolSize));
+        }
+    }
+    Clause* c = pools[idx]->createClause(lits, sz, lbd);
+    ASSERT(c->getSize() == sz);
+    return c;
+}
+
 Clause* ClauseAllocator::createClause(const Array<Lit>& lits, unsigned int lbd) {
     return createClause((const Lit*) lits, lits.getSize(), lbd);
+}
+
+void ClauseAllocator::provideClause(Clause*& c) {
+    ASSERT(c != nullptr);
+    ASSERT(c->getSize() > 1);
+    //This is added as we might be releasing a clause that was created by
+    //another thread
+    unsigned int pos = getIndex(c->getSize());
+    if (pos >= pools.getSize()) {
+        for (unsigned int i = pools.getSize(); i <= pos; i++) {
+            pools.push(new PoolList(getMaxSizeForIndex(i), initialPoolSize));
+        }
+    }
+    pools.get(pos)->releaseClause(c);
+    c = nullptr;
 }
 
 void ClauseAllocator::releaseClause(Clause*& c) {

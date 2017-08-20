@@ -3,6 +3,7 @@
 #include "SolverTest.h"
 #include "../../include/saturnin/Solver.h"
 #include "../../include/saturnin/CNFReader.h"
+#include "../../include/saturnin/Logger.h"
 
 #include <cstdint>
 
@@ -890,8 +891,14 @@ void SolverTest::testMemoryUsage(){
 #ifdef SATURNIN_DB
     expected += (sizeof(int) == sizeof(std::intptr_t) ? 12 : 24);
 #endif /* SATURNIN_DB */
+#ifdef PROFILE
+    expected += 216;
+#endif /* PROFILE */
 #ifdef SATURNIN_PARALLEL
     expected += (sizeof(int) == sizeof(std::intptr_t) ? 20 : 40);
+#ifdef PROFILE
+    expected += 16;
+#endif /* PROFILE */
 #endif /* SATURNIN_PARALLEL */
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Changes has been made to the memory model of the solver? If so, you may change the expected value.",
        expected, sizeof(saturnin::Solver) + p7.getMemoryFootprint());
