@@ -4,6 +4,7 @@ before_install:
  - sudo apt-get update -q
  - sudo apt-get install libcppunit-dev -y
  - sudo apt-get install libsqlite3-dev -y
+ - sudo apt-get install doxygen
 
 script: 
  - mkdir -p ./build/gcc/Debug
