@@ -299,9 +299,9 @@ void SolverTest::testSearchNoConflict() {
         CPPUNIT_ASSERT(wTrue == s.getVarValue(saturnin::VariablesManager::getVar(c)));
         CPPUNIT_ASSERT(wUnknown == s.getVarValue(saturnin::VariablesManager::getVar(d)));
 
-        CPPUNIT_ASSERT_EQUAL((unsigned long int) 3, s.getNbPropagation());
-        CPPUNIT_ASSERT_EQUAL((unsigned long int) 0, s.getNbConflict());
-        CPPUNIT_ASSERT_EQUAL((unsigned long int) 0, s.getNbRestarts());
+        CPPUNIT_ASSERT_EQUAL((unsigned long) 3, s.getNbPropagation());
+        CPPUNIT_ASSERT_EQUAL((unsigned long) 0, s.getNbConflict());
+        CPPUNIT_ASSERT_EQUAL((unsigned long) 0, s.getNbRestarts());
         CPPUNIT_ASSERT(s.solve(1));
 
         CPPUNIT_ASSERT(s.validate());
@@ -342,7 +342,7 @@ void SolverTest::testSearchConflict() {
         CPPUNIT_ASSERT(solFound);
         CPPUNIT_ASSERT(s.getState() == wTrue);
 
-        CPPUNIT_ASSERT_EQUAL((unsigned long int) 1, s.getNbConflict());
+        CPPUNIT_ASSERT_EQUAL((unsigned long) 1, s.getNbConflict());
 
         CPPUNIT_ASSERT(s.validate());
 
@@ -362,7 +362,7 @@ void SolverTest::testSearchConflict() {
         bool solFound = s.solve(1);
         CPPUNIT_ASSERT(solFound);
 
-        CPPUNIT_ASSERT_EQUAL((unsigned long int) 0, s.getNbConflict());
+        CPPUNIT_ASSERT_EQUAL((unsigned long) 0, s.getNbConflict());
 
         CPPUNIT_ASSERT(s.validate());
 

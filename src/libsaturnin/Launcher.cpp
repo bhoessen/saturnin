@@ -140,7 +140,9 @@ saturnin::Launcher::Launcher(int argc, char ** argv) : clean_exit(false), w(), r
 #else
     bool optSimplify = false;
 #endif /* SATURNIN_PARALLEL */
+#if !defined (WIN32) && !defined (_MSC_VER)
     int timeLim = -1;
+#endif
 #ifdef SATURNIN_DB
     char* dbFileName = nullptr;
 #endif /* SATURNIN_DB */
@@ -169,7 +171,7 @@ saturnin::Launcher::Launcher(int argc, char ** argv) : clean_exit(false), w(), r
             dbFileName = argv[i] + 3;
         }
 #endif /* SATURNIN_DB */
-#if defined (WIN32) || defined (_MSC_VER)
+#if !defined (WIN32) && !defined (_MSC_VER)
         else if (strncmp(argv[i], "-time-lim=", (size_t)10) == 0) {
             char* out = nullptr;
             timeLim = strtol(argv[i] + 10, &out, 10);
@@ -249,10 +251,10 @@ saturnin::Launcher::Launcher(int argc, char ** argv) : clean_exit(false), w(), r
     if (timeLim > 0 && (rl.rlim_max == RLIM_INFINITY || (rlim_t)timeLim < rl.rlim_max)) {
         rl.rlim_cur = timeLim;
         if (setrlimit(RLIMIT_CPU, &rl) == -1) {
-            printf("c WARNING! Could not set resource limit: CPU-time.\n");
+            printf("c\t\tWARNING! Could not set resource limit: CPU-time.\n");
         }
         else {
-            printf("c Time limit set to : %4d\n", timeLim);
+            printf("c\t\tTime limit set to : %12d\n", timeLim);
         }
     }
 #endif

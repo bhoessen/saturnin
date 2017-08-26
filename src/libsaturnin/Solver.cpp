@@ -20,6 +20,7 @@
 #include <string.h>                     // for memccpy, memmove
 #include <limits>                       // for numeric_limits
 #include <cstring>                      // for memcpy
+#include <cinttypes>                    // for PRIu64
 
 #include "../Utils.h"                   // for SATURNIN_BEGIN_PROFILE, etc
 
