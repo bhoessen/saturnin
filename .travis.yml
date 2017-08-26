@@ -17,6 +17,7 @@ script:
  - cd ../../gcc/Release
  - cmake ../../..
  - make
+ - cp -R doc ../../../docs/
  
 deploy:
   provider: pages
