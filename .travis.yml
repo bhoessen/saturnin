@@ -6,13 +6,6 @@ before_install:
  - sudo apt-get install libsqlite3-dev -y
  - sudo apt-get install doxygen
  
- deploy:
-  provider: pages
-  skip_cleanup: true
-  github_token: $GITHUB_TOKEN # Set in travis-ci.org dashboard
-  on:
-    branch: master
-
 script: 
  - mkdir -p ./build/gcc/Debug
  - mkdir -p ./build/gcc/Release
@@ -25,3 +18,10 @@ script:
  - cmake ../../..
  - make
  
+ deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: ${GH_TOKEN}
+  local_dir: docs
+  on:
+    branch: master
