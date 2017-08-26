@@ -14,10 +14,10 @@ script:
  - make
  - ./saturnin-test
  - make doc
+ - cp -R doc ../../../docs/
  - cd ../../gcc/Release
  - cmake ../../..
  - make
- - cp -R doc ../../../docs/
  
 deploy:
   provider: pages
