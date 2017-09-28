@@ -11,6 +11,7 @@
 #if defined (WIN32) || defined (_MSC_VER)
 #define NOMINMAX
 #include <windows.h>
+#include <thread>
 #else
 #include <unistd.h>
 #include <sys/resource.h>
@@ -140,9 +141,7 @@ saturnin::Launcher::Launcher(int argc, char ** argv) : clean_exit(false), w(), r
 #else
     bool optSimplify = false;
 #endif /* SATURNIN_PARALLEL */
-#if !defined (WIN32) && !defined (_MSC_VER)
     int timeLim = -1;
-#endif
 #ifdef SATURNIN_DB
     char* dbFileName = nullptr;
 #endif /* SATURNIN_DB */
@@ -171,7 +170,6 @@ saturnin::Launcher::Launcher(int argc, char ** argv) : clean_exit(false), w(), r
             dbFileName = argv[i] + 3;
         }
 #endif /* SATURNIN_DB */
-#if !defined (WIN32) && !defined (_MSC_VER)
         else if (strncmp(argv[i], "-time-lim=", (size_t)10) == 0) {
             char* out = nullptr;
             timeLim = strtol(argv[i] + 10, &out, 10);
@@ -179,7 +177,6 @@ saturnin::Launcher::Launcher(int argc, char ** argv) : clean_exit(false), w(), r
                 timeLim = -1;
             }
         }
-#endif /* WIN32 */
     }
 
     //don't use stack allocation as it wouldn't be destroyed until the end
@@ -242,6 +239,15 @@ saturnin::Launcher::Launcher(int argc, char ** argv) : clean_exit(false), w(), r
     //add the handlers for CTRL-C signals
 #if defined (WIN32) || defined (_MSC_VER)
     SetConsoleCtrlHandler(winSigStopLauncher, true);
+    if (timeLim > 0) {
+      printf("c\t\tTime limit set to:     %12d\n", timeLim);
+      auto alreadyElapsed = w.getTimeEllapsed();
+      waitingThread = std::unique_ptr<std::thread>(new std::thread([timeLim, alreadyElapsed]() {
+          auto toWait = timeLim * 1000 - alreadyElapsed;
+          std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(toWait));
+          winSigStopLauncher(CTRL_CLOSE_EVENT);
+      }));
+    }
 #else
     signal(SIGINT, sigStopLauncher);
     signal(SIGXCPU, sigStopLauncher);
@@ -254,7 +260,7 @@ saturnin::Launcher::Launcher(int argc, char ** argv) : clean_exit(false), w(), r
             printf("c\t\tWARNING! Could not set resource limit: CPU-time.\n");
         }
         else {
-            printf("c\t\tTime limit set to : %12d\n", timeLim);
+            printf("c\t\tTime limit set to:     %12d\n", timeLim);
         }
     }
 #endif
@@ -310,6 +316,11 @@ int saturnin::Launcher::solve()
 #else
     printStats(*solver);
 #endif /* SATURNIN_PARALLEL */
+#if defined (WIN32) || defined (_MSC_VER)
+    if (waitingThread) {
+      waitingThread->join();
+    }
+#endif
 
     return returnValue;
 }

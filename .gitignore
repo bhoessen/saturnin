@@ -16,3 +16,4 @@ test/gprof2dot.py
 imgui.ini
 Makefile
 Doxyfile
+evaluation/*

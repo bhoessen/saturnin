@@ -22,6 +22,10 @@ along with saturnin.  If not, see <http://www.gnu.org/licenses/>.
 #include "StopWatch.h"
 #include "Saturnin.h"
 #include <stdio.h>
+#if defined (WIN32) || defined (_MSC_VER)
+#include <thread>
+#include <memory>
+#endif
 
 namespace saturnin {
 
@@ -118,6 +122,9 @@ namespace saturnin {
         unsigned int nbClauses = 0;
         unsigned int avgLenght = 0;
         unsigned int maxLenght = 0;
+#if defined (WIN32) || defined (_MSC_VER)
+        std::unique_ptr<std::thread> waitingThread;
+#endif
     };
 
 }
