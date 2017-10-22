@@ -25,6 +25,7 @@ script:
  - cmake ../../.. -DCMAKE_BUILD_TYPE=Coverage
  - make saturnin-coverage
  - cp -R saturnin-coverage ../../../docs/coverage
+ - cd ../../..
  
 deploy:
   provider: pages
