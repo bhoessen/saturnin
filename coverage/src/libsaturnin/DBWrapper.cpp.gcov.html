@@ -1,0 +1,583 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - saturnin-coverage.info.cleaned - src/libsaturnin/DBWrapper.cpp</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">src/libsaturnin</a> - DBWrapper.cpp<span style="font-size: 80%;"> (source / <a href="DBWrapper.cpp.func.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">saturnin-coverage.info.cleaned</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">271</td>
+            <td class="headerCovTableEntry">275</td>
+            <td class="headerCovTableEntryHi">98.5 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2017-10-22</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">27</td>
+            <td class="headerCovTableEntry">30</td>
+            <td class="headerCovTableEntryHi">90.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : #include &quot;saturnin/DBWrapper.h&quot;</a>
+<span class="lineNum">       2 </span>            : #include &quot;saturnin/Logger.h&quot;
+<span class="lineNum">       3 </span>            : #include &quot;saturnin/VariablesManager.h&quot;
+<span class="lineNum">       4 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">       5 </span>            : #include &lt;sqlite3.h&gt;
+<span class="lineNum">       6 </span>            : #include &lt;algorithm&gt;
+<span class="lineNum">       7 </span>            : #include &lt;iosfwd&gt;
+<span class="lineNum">       8 </span>            : #include &lt;sstream&gt;
+<span class="lineNum">       9 </span>            : #include &lt;map&gt;
+<span class="lineNum">      10 </span>            : #include &lt;algorithm&gt;
+<span class="lineNum">      11 </span>            : 
+<span class="lineNum">      12 </span>            : #include &quot;../Utils.h&quot;
+<span class="lineNum">      13 </span>            : #include &quot;DBWrapperUtils.h&quot;
+<span class="lineNum">      14 </span>            : 
+<span class="lineNum">      15 </span>            : using namespace saturnin;
+<span class="lineNum">      16 </span>            : 
+<a name="17"><span class="lineNum">      17 </span>            : extern &quot;C&quot; {</a>
+<span class="lineNum">      18 </span>            : 
+<span class="lineNum">      19 </span><span class="lineCov">         27 :     int executeTreatment(void* exp, int nbColumns, char** columnsValue, char** columnsName) {</span>
+<span class="lineNum">      20 </span><span class="lineCov">         27 :         QueryTreatment* t = (QueryTreatment*) exp;</span>
+<span class="lineNum">      21 </span><span class="lineCov">         27 :         return t-&gt;execute(nbColumns, columnsValue, columnsName);</span>
+<span class="lineNum">      22 </span>            :     }
+<a name="23"><span class="lineNum">      23 </span>            : }</a>
+<span class="lineNum">      24 </span>            : 
+<span class="lineNum">      25 </span><span class="lineCov">         12 : class ClauseCounter : public QueryTreatment {</span>
+<a name="26"><span class="lineNum">      26 </span>            : public:</a>
+<span class="lineNum">      27 </span>            : 
+<span class="lineNum">      28 </span><span class="lineCov">         12 :     ClauseCounter() : count(0), set(false) {</span>
+<span class="lineNum">      29 </span><span class="lineCov">         12 :     }</span>
+<span class="lineNum">      30 </span>            : 
+<a name="31"><span class="lineNum">      31 </span>            : #ifdef DEBUG</a>
+<span class="lineNum">      32 </span>            : 
+<span class="lineNum">      33 </span><span class="lineCov">         12 :     virtual int execute(int nbColumns, char** columnsValue, char**) {</span>
+<span class="lineNum">      34 </span>            : #else
+<span class="lineNum">      35 </span>            : 
+<span class="lineNum">      36 </span>            :     virtual int execute(int, char** columnsValue, char**) {
+<span class="lineNum">      37 </span>            : #endif /* DEBUG */
+<span class="lineNum">      38 </span><span class="lineCov">         12 :         ASSERT_EQUAL(1, nbColumns);</span>
+<span class="lineNum">      39 </span><span class="lineCov">         12 :         ASSERT(!set);</span>
+<span class="lineNum">      40 </span><span class="lineCov">         12 :         char* end = nullptr;</span>
+<span class="lineNum">      41 </span><span class="lineCov">         12 :         count = strtol(columnsValue[0], &amp;end, 10);</span>
+<span class="lineNum">      42 </span><span class="lineCov">         12 :         ASSERT(end &gt; columnsValue[0]);</span>
+<span class="lineNum">      43 </span><span class="lineCov">         12 :         return SQLITE_OK;</span>
+<a name="44"><span class="lineNum">      44 </span>            :     }</a>
+<span class="lineNum">      45 </span>            : 
+<span class="lineNum">      46 </span><span class="lineCov">         12 :     long getCount() {</span>
+<span class="lineNum">      47 </span><span class="lineCov">         12 :         return count;</span>
+<span class="lineNum">      48 </span>            :     }
+<span class="lineNum">      49 </span>            : 
+<span class="lineNum">      50 </span>            : private:
+<span class="lineNum">      51 </span>            :     long count;
+<span class="lineNum">      52 </span>            :     bool set;
+<a name="53"><span class="lineNum">      53 </span>            : };</a>
+<span class="lineNum">      54 </span>            : 
+<span class="lineNum">      55 </span><span class="lineCov">         60 : DBWrapper::DBWrapper(const char* aDBName, bool verbose) :</span>
+<span class="lineNum">      56 </span><span class="lineCov">         60 : internalDBEngine(nullptr), nbClauses(0), produceLogs(verbose) {</span>
+<span class="lineNum">      57 </span><span class="lineCov">        108 :     if (aDBName == nullptr) return;</span>
+<span class="lineNum">      58 </span>            : 
+<span class="lineNum">      59 </span>            :     int retVal = sqlite3_open_v2(aDBName, &amp;internalDBEngine,
+<span class="lineNum">      60 </span><span class="lineCov">         13 :             SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE , nullptr);</span>
+<span class="lineNum">      61 </span><span class="lineCov">         13 :     if (SQLITE_OK != retVal || internalDBEngine == nullptr) {</span>
+<span class="lineNum">      62 </span><span class="lineCov">          1 :         if (internalDBEngine != nullptr) {</span>
+<span class="lineNum">      63 </span><span class="lineCov">          1 :             sqlite3_close(internalDBEngine);</span>
+<span class="lineNum">      64 </span>            :         }
+<span class="lineNum">      65 </span><span class="lineCov">          1 :         internalDBEngine = nullptr;</span>
+<span class="lineNum">      66 </span><span class="lineCov">          1 :         if (produceLogs)</span>
+<span class="lineNum">      67 </span><span class="lineCov">          1 :             fprintf(Logger::getDBLogger().getOutput(),</span>
+<span class="lineNum">      68 </span>            : #if SQLITE_VERSION_NUMBER &gt; 3007016
+<span class="lineNum">      69 </span>            :                 &quot;c [dblog] Unable to open/create database '%s': %s\n&quot;,
+<span class="lineNum">      70 </span><span class="lineCov">          2 :                 aDBName, sqlite3_errstr(retVal));</span>
+<span class="lineNum">      71 </span>            : #else
+<span class="lineNum">      72 </span>            :                 &quot;c [dblog] Unable to open/create database '%s'\n&quot;,
+<span class="lineNum">      73 </span>            :                 aDBName);
+<span class="lineNum">      74 </span>            : #endif
+<span class="lineNum">      75 </span><span class="lineCov">          1 :         return;</span>
+<span class="lineNum">      76 </span>            :     }
+<span class="lineNum">      77 </span>            : 
+<span class="lineNum">      78 </span>            :     /* Create the tables needed */
+<span class="lineNum">      79 </span>            : 
+<span class="lineNum">      80 </span><span class="lineCov">         12 :     executeQuery(&quot;CREATE TABLE clause(id INTEGER, literals TEXT, lbd INTEGER, height INTEGER);&quot;);</span>
+<span class="lineNum">      81 </span><span class="lineCov">         12 :     executeQuery(&quot;CREATE TABLE resolution(clause TEXT, clauseID INTEGER, resolvent INTEGER);&quot;);</span>
+<span class="lineNum">      82 </span>            : 
+<span class="lineNum">      83 </span>            :     //count the number of clauses already present in the database
+<span class="lineNum">      84 </span><span class="lineCov">         12 :     ClauseCounter c;</span>
+<span class="lineNum">      85 </span><span class="lineCov">         12 :     executeQuery(&quot;SELECT COUNT(id) FROM clause;&quot;, &amp;c);</span>
+<span class="lineNum">      86 </span><span class="lineCov">         12 :     nbClauses = c.getCount();</span>
+<a name="87"><span class="lineNum">      87 </span>            : }</a>
+<span class="lineNum">      88 </span>            : 
+<span class="lineNum">      89 </span><span class="lineCov">         60 : DBWrapper::~DBWrapper() {</span>
+<span class="lineNum">      90 </span><span class="lineCov">         60 :     if (internalDBEngine == nullptr) return;</span>
+<span class="lineNum">      91 </span><span class="lineCov">         12 :     int returnCode = sqlite3_close(internalDBEngine);</span>
+<span class="lineNum">      92 </span><span class="lineCov">         12 :     if (returnCode != SQLITE_OK) {</span>
+<span class="lineNum">      93 </span><span class="lineNoCov">          0 :         fprintf(Logger::getDBLogger().getOutput(),</span>
+<span class="lineNum">      94 </span>            :                &quot;c [dblog] unable to close the DB: %s (error code: %d)\n&quot;,
+<span class="lineNum">      95 </span>            : #if SQLITE_VERSION_NUMBER &gt; 3007016
+<span class="lineNum">      96 </span><span class="lineNoCov">          0 :                 sqlite3_errstr(returnCode), returnCode);</span>
+<span class="lineNum">      97 </span>            : #else
+<span class="lineNum">      98 </span>            :                 sqlite3_errmsg(internalDBEngine), returnCode);
+<span class="lineNum">      99 </span>            : #endif
+<span class="lineNum">     100 </span>            :     }
+<a name="101"><span class="lineNum">     101 </span><span class="lineCov">         60 : }</span></a>
+<span class="lineNum">     102 </span>            : 
+<span class="lineNum">     103 </span><span class="lineCov">          3 : size_t DBWrapper::getMemoryFootprint() const {</span>
+<span class="lineNum">     104 </span><span class="lineCov">          3 :     if (internalDBEngine == nullptr) return 0;</span>
+<span class="lineNum">     105 </span>            : 
+<span class="lineNum">     106 </span><span class="lineCov">          1 :     int mem = 0;</span>
+<span class="lineNum">     107 </span><span class="lineCov">          1 :     int max = 0;</span>
+<span class="lineNum">     108 </span><span class="lineCov">          1 :     sqlite3_status(SQLITE_STATUS_MEMORY_USED, &amp;mem, &amp;max, false);</span>
+<span class="lineNum">     109 </span><span class="lineCov">          1 :     return mem;</span>
+<a name="110"><span class="lineNum">     110 </span>            : }</a>
+<span class="lineNum">     111 </span>            : 
+<span class="lineNum">     112 </span><span class="lineCov">     355284 : bool DBWrapper::addResolution(const Lit * const lits, long resolvent) {</span>
+<span class="lineNum">     113 </span><span class="lineCov">     355284 :     if (internalDBEngine == nullptr) return true;</span>
+<span class="lineNum">     114 </span>            : #ifdef DEBUG
+<span class="lineNum">     115 </span><span class="lineCov">        190 :     if (produceLogs) fprintf(Logger::getDBLogger().getOutput(), &quot;c [dblog] %s\n&quot;, __PRETTY_FUNCTION__);</span>
+<span class="lineNum">     116 </span>            : #endif /* DEBUG */
+<span class="lineNum">     117 </span>            : 
+<span class="lineNum">     118 </span><span class="lineCov">        190 :     std::stringstream aInsertStrm;</span>
+<span class="lineNum">     119 </span><span class="lineCov">        190 :     aInsertStrm &lt;&lt; &quot;INSERT INTO resolution(clause, resolvent) VALUES('&quot;;</span>
+<span class="lineNum">     120 </span><span class="lineCov">        190 :     aInsertStrm &lt;&lt; VariablesManager::toDimacs(*lits);</span>
+<span class="lineNum">     121 </span><span class="lineCov">        836 :     for (const Lit* i = lits + 1; *i != lit_Undef; i++) {</span>
+<span class="lineNum">     122 </span><span class="lineCov">        646 :         aInsertStrm &lt;&lt; &quot; &quot; &lt;&lt; VariablesManager::toDimacs(*i);</span>
+<span class="lineNum">     123 </span>            :     }
+<span class="lineNum">     124 </span><span class="lineCov">        190 :     aInsertStrm &lt;&lt; &quot;', &quot; &lt;&lt; resolvent &lt;&lt; &quot;);&quot;;</span>
+<span class="lineNum">     125 </span><span class="lineCov">        190 :     return executeQuery(aInsertStrm.str().c_str());</span>
+<a name="126"><span class="lineNum">     126 </span>            : }</a>
+<span class="lineNum">     127 </span>            : 
+<span class="lineNum">     128 </span><span class="lineCov">     204219 : bool DBWrapper::addClause(const Lit * const lits, long id) {</span>
+<span class="lineNum">     129 </span><span class="lineCov">     204219 :     if (internalDBEngine == nullptr) return true;</span>
+<span class="lineNum">     130 </span>            : #ifdef DEBUG
+<span class="lineNum">     131 </span><span class="lineCov">        194 :     if (produceLogs) fprintf(Logger::getDBLogger().getOutput(), &quot;c [dblog] %s\n&quot;, __PRETTY_FUNCTION__);</span>
+<span class="lineNum">     132 </span>            : #endif /* DEBUG */
+<span class="lineNum">     133 </span>            : 
+<span class="lineNum">     134 </span><span class="lineCov">        194 :     std::stringstream aInsertStrm;</span>
+<span class="lineNum">     135 </span><span class="lineCov">        194 :     aInsertStrm &lt;&lt; &quot;INSERT INTO clause(literals, id) VALUES('&quot;;</span>
+<span class="lineNum">     136 </span><span class="lineCov">        194 :     if (lits != nullptr &amp;&amp; *lits != lit_Undef) {</span>
+<span class="lineNum">     137 </span><span class="lineCov">        193 :         aInsertStrm &lt;&lt; VariablesManager::toDimacs(*lits);</span>
+<span class="lineNum">     138 </span><span class="lineCov">       1572 :         for (const Lit* i = lits + 1; *i != lit_Undef; i++) {</span>
+<span class="lineNum">     139 </span><span class="lineCov">       1379 :             aInsertStrm &lt;&lt; &quot; &quot; &lt;&lt; VariablesManager::toDimacs(*i);</span>
+<span class="lineNum">     140 </span>            :         }
+<span class="lineNum">     141 </span>            :     }
+<span class="lineNum">     142 </span><span class="lineCov">        194 :     aInsertStrm &lt;&lt; &quot;', &quot; &lt;&lt; id &lt;&lt; &quot;);&quot;;</span>
+<span class="lineNum">     143 </span><span class="lineCov">        194 :     if (executeQuery(aInsertStrm.str().c_str())) {</span>
+<span class="lineNum">     144 </span><span class="lineCov">        194 :         nbClauses++;</span>
+<span class="lineNum">     145 </span><span class="lineCov">        194 :         return true;</span>
+<span class="lineNum">     146 </span>            :     } else {
+<span class="lineNum">     147 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">     148 </span><span class="lineCov">        194 :     }</span>
+<a name="149"><span class="lineNum">     149 </span>            : }</a>
+<span class="lineNum">     150 </span>            : 
+<span class="lineNum">     151 </span><span class="lineCov">         45 : std::string DBWrapper::sortLiterals(const std::string&amp; clause) const {</span>
+<span class="lineNum">     152 </span><span class="lineCov">         45 :     Array&lt;int&gt; lits(clause.size());</span>
+<span class="lineNum">     153 </span><span class="lineCov">         45 :     unsigned int sz = clause.size();</span>
+<span class="lineNum">     154 </span><span class="lineCov">         45 :     const char* chars = clause.c_str();</span>
+<span class="lineNum">     155 </span><span class="lineCov">         45 :     const char* end = nullptr;</span>
+<span class="lineNum">     156 </span>            : 
+<span class="lineNum">     157 </span><span class="lineCov">        257 :     while (sz &gt; 0) {</span>
+<span class="lineNum">     158 </span><span class="lineCov">        167 :         int nbRead = 0;</span>
+<span class="lineNum">     159 </span><span class="lineCov">        167 :         int64_t read = strntol(chars, &amp;end, sz, nbRead);</span>
+<span class="lineNum">     160 </span><span class="lineCov">        272 :         if (nbRead &gt; 0 &amp;&amp; read &gt;= std::numeric_limits&lt;int&gt;::min() &amp;&amp;</span>
+<span class="lineNum">     161 </span><span class="lineCov">        105 :                 read &lt;= std::numeric_limits&lt;int&gt;::max()) {</span>
+<span class="lineNum">     162 </span><span class="lineCov">        105 :             lits.push((int) read);</span>
+<span class="lineNum">     163 </span>            :         }
+<span class="lineNum">     164 </span><span class="lineCov">        167 :         sz = end - chars;</span>
+<span class="lineNum">     165 </span><span class="lineCov">        167 :         chars = end;</span>
+<span class="lineNum">     166 </span>            :     }
+<span class="lineNum">     167 </span>            : 
+<span class="lineNum">     168 </span><span class="lineCov">         45 :     std::sort((int*) lits, ((int*) lits) + lits.getSize());</span>
+<span class="lineNum">     169 </span>            : 
+<span class="lineNum">     170 </span><span class="lineCov">         90 :     std::stringstream out;</span>
+<span class="lineNum">     171 </span><span class="lineCov">         45 :     if (lits.getSize() &gt; 0) {</span>
+<span class="lineNum">     172 </span><span class="lineCov">         44 :         out &lt;&lt; lits[0U];</span>
+<span class="lineNum">     173 </span><span class="lineCov">        105 :         for (unsigned int i = 1; i &lt; lits.getSize(); i++) {</span>
+<span class="lineNum">     174 </span><span class="lineCov">         61 :             out &lt;&lt; &quot; &quot; &lt;&lt; lits[i];</span>
+<span class="lineNum">     175 </span>            :         }
+<span class="lineNum">     176 </span>            :     }
+<span class="lineNum">     177 </span><span class="lineCov">         90 :     return out.str();</span>
+<a name="178"><span class="lineNum">     178 </span>            : }</a>
+<span class="lineNum">     179 </span>            : 
+<span class="lineNum">     180 </span><span class="lineCov">          6 : void DBWrapper::sanatize() {</span>
+<span class="lineNum">     181 </span><span class="lineCov">         12 :     if (internalDBEngine == nullptr) return;</span>
+<span class="lineNum">     182 </span>            : #ifdef DEBUG
+<span class="lineNum">     183 </span><span class="lineCov">          5 :     if (produceLogs) fprintf(Logger::getDBLogger().getOutput(), &quot;c [dblog] %s\n&quot;, __PRETTY_FUNCTION__);</span>
+<span class="lineNum">     184 </span>            : #endif /* DEBUG */
+<span class="lineNum">     185 </span>            :     {
+<span class="lineNum">     186 </span>            :         //make sure that the literals in the clauses are sorted
+<span class="lineNum">     187 </span><span class="lineCov">          5 :         PreparedStatement stmt(internalDBEngine, &quot;SELECT literals, id FROM clause;&quot;, produceLogs);</span>
+<span class="lineNum">     188 </span><span class="lineCov">          5 :         sqlite3_stmt* selectClausesStmt = stmt;</span>
+<span class="lineNum">     189 </span>            :         int errorCode;
+<span class="lineNum">     190 </span><span class="lineCov">         30 :         for (errorCode = sqlite3_step(selectClausesStmt);</span>
+<span class="lineNum">     191 </span>            :                 errorCode == SQLITE_ROW;
+<span class="lineNum">     192 </span>            :                 errorCode = sqlite3_step(selectClausesStmt)) {
+<span class="lineNum">     193 </span><span class="lineCov">         25 :             ASSERT_EQUAL(2, sqlite3_column_count(selectClausesStmt));</span>
+<span class="lineNum">     194 </span><span class="lineCov">         25 :             ASSERT_EQUAL(SQLITE_TEXT, sqlite3_column_type(selectClausesStmt, 0));</span>
+<span class="lineNum">     195 </span><span class="lineCov">         25 :             ASSERT_EQUAL(SQLITE_INTEGER, sqlite3_column_type(selectClausesStmt, 1));</span>
+<span class="lineNum">     196 </span>            : 
+<span class="lineNum">     197 </span><span class="lineCov">         25 :             sqlite3_int64 id = sqlite3_column_int64(selectClausesStmt, 1);</span>
+<span class="lineNum">     198 </span><span class="lineCov">         25 :             const unsigned char* literals = sqlite3_column_text(selectClausesStmt, 0);</span>
+<span class="lineNum">     199 </span>            :             //we are allowed to reinterpret_cast since we will not handle the full
+<span class="lineNum">     200 </span>            :             //utf-8 chars, but chars whithin [0-9]
+<span class="lineNum">     201 </span><span class="lineCov">         25 :             std::string clause(reinterpret_cast&lt;const char*&gt; (literals));</span>
+<span class="lineNum">     202 </span><span class="lineCov">         50 :             std::string sortedClause(sortLiterals(clause));</span>
+<span class="lineNum">     203 </span>            : 
+<span class="lineNum">     204 </span><span class="lineCov">         50 :             std::stringstream updateQuery;</span>
+<span class="lineNum">     205 </span><span class="lineCov">         25 :             updateQuery &lt;&lt; &quot;UPDATE clause SET literals = '&quot;;</span>
+<span class="lineNum">     206 </span><span class="lineCov">         25 :             updateQuery &lt;&lt; sortedClause &lt;&lt; &quot;' WHERE id = &quot;;</span>
+<span class="lineNum">     207 </span><span class="lineCov">         25 :             updateQuery &lt;&lt; id &lt;&lt; &quot;;&quot;;</span>
+<span class="lineNum">     208 </span><span class="lineCov">         25 :             executeQuery(updateQuery.str().c_str());</span>
+<span class="lineNum">     209 </span><span class="lineCov">         30 :         }</span>
+<span class="lineNum">     210 </span>            :     }
+<span class="lineNum">     211 </span>            : 
+<span class="lineNum">     212 </span>            :     {
+<span class="lineNum">     213 </span>            :         //map the clause text with their clause id from the resolution table
+<span class="lineNum">     214 </span>            :         PreparedStatement selectStmt(internalDBEngine,
+<span class="lineNum">     215 </span><span class="lineCov">          5 :                 &quot;SELECT clause, resolvent from resolution;&quot;, produceLogs);</span>
+<span class="lineNum">     216 </span><span class="lineCov">          5 :         sqlite3_stmt* stmt = selectStmt;</span>
+<span class="lineNum">     217 </span>            :         int errorCode;
+<span class="lineNum">     218 </span><span class="lineCov">         25 :         for (errorCode = sqlite3_step(stmt);</span>
+<span class="lineNum">     219 </span>            :                 errorCode == SQLITE_ROW;
+<span class="lineNum">     220 </span>            :                 errorCode = sqlite3_step(stmt)) {
+<span class="lineNum">     221 </span><span class="lineCov">         20 :             ASSERT_EQUAL(2, sqlite3_column_count(stmt));</span>
+<span class="lineNum">     222 </span><span class="lineCov">         20 :             ASSERT_EQUAL(SQLITE_TEXT, sqlite3_column_type(stmt, 0)); //clause</span>
+<span class="lineNum">     223 </span><span class="lineCov">         20 :             ASSERT_EQUAL(SQLITE_INTEGER, sqlite3_column_type(stmt, 1)); //clauseID</span>
+<span class="lineNum">     224 </span>            : 
+<span class="lineNum">     225 </span><span class="lineCov">         20 :             sqlite3_int64 id = sqlite3_column_int64(stmt, 1);</span>
+<span class="lineNum">     226 </span><span class="lineCov">         20 :             const unsigned char* literals = sqlite3_column_text(stmt, 0);</span>
+<span class="lineNum">     227 </span>            :             //we are allowed to reinterpret_cast since we will not handle the full
+<span class="lineNum">     228 </span>            :             //utf-8 chars, but chars whithin [0-9]
+<span class="lineNum">     229 </span><span class="lineCov">         20 :             std::string clause(reinterpret_cast&lt;const char*&gt; (literals));</span>
+<span class="lineNum">     230 </span><span class="lineCov">         40 :             std::string sortedClause(sortLiterals(clause));</span>
+<span class="lineNum">     231 </span>            : 
+<span class="lineNum">     232 </span><span class="lineCov">         40 :             std::stringstream updateQuery;</span>
+<span class="lineNum">     233 </span><span class="lineCov">         20 :             updateQuery &lt;&lt; &quot;UPDATE resolution &quot;;</span>
+<span class="lineNum">     234 </span><span class="lineCov">         20 :             updateQuery &lt;&lt; &quot;SET clauseID = &quot;;</span>
+<span class="lineNum">     235 </span><span class="lineCov">         20 :             updateQuery &lt;&lt; &quot;  (SELECT MAX(clause.id) &quot;;</span>
+<span class="lineNum">     236 </span><span class="lineCov">         20 :             updateQuery &lt;&lt; &quot;   FROM clause &quot;;</span>
+<span class="lineNum">     237 </span><span class="lineCov">         20 :             updateQuery &lt;&lt; &quot;   WHERE clause.literals = '&quot; &lt;&lt; sortedClause &lt;&lt; &quot;' &quot;;</span>
+<span class="lineNum">     238 </span><span class="lineCov">         20 :             updateQuery &lt;&lt; &quot;     AND clause.id &lt; &quot; &lt;&lt; id &lt;&lt; &quot;) &quot;;</span>
+<span class="lineNum">     239 </span><span class="lineCov">         20 :             updateQuery &lt;&lt; &quot;WHERE resolution.clause = '&quot; &lt;&lt; clause &lt;&lt; &quot;'&quot;;</span>
+<span class="lineNum">     240 </span><span class="lineCov">         20 :             updateQuery &lt;&lt; &quot;  AND resolution.resolvent = &quot; &lt;&lt; id &lt;&lt; &quot;;&quot;;</span>
+<span class="lineNum">     241 </span><span class="lineCov">         20 :             executeQuery(updateQuery.str().c_str());</span>
+<span class="lineNum">     242 </span><span class="lineCov">         25 :         }</span>
+<span class="lineNum">     243 </span>            :     }
+<span class="lineNum">     244 </span>            : 
+<a name="245"><span class="lineNum">     245 </span>            : }</a>
+<span class="lineNum">     246 </span>            : 
+<span class="lineNum">     247 </span><span class="lineCov">          1 : void DBWrapper::computeHeights() {</span>
+<span class="lineNum">     248 </span><span class="lineCov">          2 :     if (internalDBEngine == nullptr) return;</span>
+<span class="lineNum">     249 </span>            : #ifdef DEBUG
+<span class="lineNum">     250 </span><span class="lineCov">          1 :     if (produceLogs) fprintf(Logger::getDBLogger().getOutput(), &quot;c [dblog] %s\n&quot;, __PRETTY_FUNCTION__);</span>
+<span class="lineNum">     251 </span>            : #endif /* DEBUG */
+<span class="lineNum">     252 </span>            :     //set the height of the initial clauses
+<span class="lineNum">     253 </span><span class="lineCov">          1 :     executeQuery(&quot;UPDATE clause SET height = 0 WHERE NOT EXISTS (SELECT clauseId FROM resolution WHERE resolvent = clause.id);&quot;);</span>
+<span class="lineNum">     254 </span>            : 
+<span class="lineNum">     255 </span>            :     //compute the height of the learnt clauses
+<span class="lineNum">     256 </span><span class="lineCov">          1 :     PreparedStatement stmt(internalDBEngine, &quot;SELECT id FROM clause WHERE height IS NULL ORDER BY id;&quot;, produceLogs);</span>
+<span class="lineNum">     257 </span><span class="lineCov">          1 :     sqlite3_stmt* selectClausesStmt = stmt;</span>
+<span class="lineNum">     258 </span>            :     int errorCode;
+<span class="lineNum">     259 </span><span class="lineCov">          4 :     for (errorCode = sqlite3_step(selectClausesStmt);</span>
+<span class="lineNum">     260 </span>            :             errorCode == SQLITE_ROW;
+<span class="lineNum">     261 </span>            :             errorCode = sqlite3_step(selectClausesStmt)) {
+<span class="lineNum">     262 </span><span class="lineCov">          3 :         ASSERT_EQUAL(1, sqlite3_column_count(selectClausesStmt));</span>
+<span class="lineNum">     263 </span><span class="lineCov">          3 :         ASSERT_EQUAL(SQLITE_INTEGER, sqlite3_column_type(selectClausesStmt, 0));</span>
+<span class="lineNum">     264 </span>            : 
+<span class="lineNum">     265 </span><span class="lineCov">          3 :         sqlite3_int64 id = sqlite3_column_int64(stmt, 0);</span>
+<span class="lineNum">     266 </span>            : 
+<span class="lineNum">     267 </span><span class="lineCov">          3 :         std::stringstream q;</span>
+<span class="lineNum">     268 </span><span class="lineCov">          3 :         q &lt;&lt; &quot;UPDATE clause &quot;;</span>
+<span class="lineNum">     269 </span><span class="lineCov">          3 :         q &lt;&lt; &quot;SET height = (&quot;;</span>
+<span class="lineNum">     270 </span><span class="lineCov">          3 :         q &lt;&lt; &quot;    SELECT 1+MAX(c.height)&quot;;</span>
+<span class="lineNum">     271 </span><span class="lineCov">          3 :         q &lt;&lt; &quot;    FROM  clause c INNER JOIN resolution ON&quot;;</span>
+<span class="lineNum">     272 </span><span class="lineCov">          3 :         q &lt;&lt; &quot;        c.id = resolution.clauseId &quot;;</span>
+<span class="lineNum">     273 </span><span class="lineCov">          3 :         q &lt;&lt; &quot;    WHERE resolution.resolvent = &quot; &lt;&lt; id;</span>
+<span class="lineNum">     274 </span><span class="lineCov">          3 :         q &lt;&lt; &quot;    ) &quot;;</span>
+<span class="lineNum">     275 </span><span class="lineCov">          3 :         q &lt;&lt; &quot;WHERE clause.id = &quot; &lt;&lt; id &lt;&lt; &quot; AND height IS NULL;&quot;;</span>
+<span class="lineNum">     276 </span><span class="lineCov">          6 :         std::string query = q.str();</span>
+<span class="lineNum">     277 </span><span class="lineCov">          3 :         executeQuery(query.c_str());</span>
+<span class="lineNum">     278 </span><span class="lineCov">          4 :     }</span>
+<span class="lineNum">     279 </span>            : }
+<span class="lineNum">     280 </span>            : 
+<span class="lineNum">     281 </span>            : class ResolutionChecker : public QueryTreatment {
+<a name="282"><span class="lineNum">     282 </span>            : public:</a>
+<span class="lineNum">     283 </span>            : 
+<span class="lineNum">     284 </span><span class="lineCov">          2 :     ResolutionChecker(bool verb) : result(true), verbose(verb),</span>
+<span class="lineNum">     285 </span><span class="lineCov">          2 :     currentClauseId(-1), currentClause(), resolutions() {</span>
+<span class="lineNum">     286 </span><span class="lineCov">          2 :     }</span>
+<span class="lineNum">     287 </span>            : 
+<a name="288"><span class="lineNum">     288 </span>            :     virtual ~ResolutionChecker();</a>
+<span class="lineNum">     289 </span>            : 
+<span class="lineNum">     290 </span><span class="lineCov">          2 :     bool getResult() {</span>
+<span class="lineNum">     291 </span><span class="lineCov">          2 :         if (resolutions.getSize() &gt; 0 &amp;&amp; result) {</span>
+<span class="lineNum">     292 </span><span class="lineCov">          2 :             result = validateResolution();</span>
+<span class="lineNum">     293 </span><span class="lineCov">          2 :             resolutions.pop(resolutions.getSize());</span>
+<span class="lineNum">     294 </span>            :         }
+<span class="lineNum">     295 </span><span class="lineCov">          2 :         return result;</span>
+<span class="lineNum">     296 </span>            :     }
+<a name="297"><span class="lineNum">     297 </span>            : #ifdef DEBUG</a>
+<span class="lineNum">     298 </span>            : 
+<span class="lineNum">     299 </span><span class="lineCov">         13 :     virtual int execute(int nbColumns, char** columnsValue, char**) {</span>
+<span class="lineNum">     300 </span>            : #else
+<span class="lineNum">     301 </span>            : 
+<span class="lineNum">     302 </span>            :     virtual int execute(int, char** columnsValue, char**) {
+<span class="lineNum">     303 </span>            : #endif /* DEBUG */
+<span class="lineNum">     304 </span><span class="lineCov">         13 :         ASSERT_EQUAL(3, nbColumns);</span>
+<span class="lineNum">     305 </span>            :         char* endPtr;
+<span class="lineNum">     306 </span><span class="lineCov">         13 :         long resolventId = strtol(columnsValue[0], &amp;endPtr, 10);</span>
+<span class="lineNum">     307 </span><span class="lineCov">         13 :         ASSERT(endPtr &gt; columnsValue[0]);</span>
+<span class="lineNum">     308 </span><span class="lineCov">         13 :         if (resolventId != currentClauseId) {</span>
+<span class="lineNum">     309 </span>            :             //make sure the previous resolution was correct
+<span class="lineNum">     310 </span><span class="lineCov">          5 :             if (!validateResolution()) {</span>
+<span class="lineNum">     311 </span><span class="lineNoCov">          0 :                 return -1;</span>
+<span class="lineNum">     312 </span>            :             }
+<span class="lineNum">     313 </span>            : 
+<span class="lineNum">     314 </span><span class="lineCov">          5 :             currentClauseId = resolventId;</span>
+<span class="lineNum">     315 </span><span class="lineCov">          5 :             currentClause.pop(currentClause.getSize());</span>
+<span class="lineNum">     316 </span><span class="lineCov">          5 :             insertLiterals(columnsValue[2], currentClause);</span>
+<span class="lineNum">     317 </span><span class="lineCov">          5 :             std::sort((Lit*) currentClause, currentClause.getSize() + (Lit*) currentClause);</span>
+<span class="lineNum">     318 </span><span class="lineCov">          5 :             resolutions.pop(resolutions.getSize());</span>
+<span class="lineNum">     319 </span>            :         }
+<span class="lineNum">     320 </span><span class="lineCov">         13 :         insertLiterals(columnsValue[1], resolutions);</span>
+<span class="lineNum">     321 </span><span class="lineCov">         13 :         return SQLITE_OK;</span>
+<span class="lineNum">     322 </span>            :     }
+<span class="lineNum">     323 </span>            : 
+<span class="lineNum">     324 </span>            : 
+<span class="lineNum">     325 </span>            : 
+<a name="326"><span class="lineNum">     326 </span>            : private:</a>
+<span class="lineNum">     327 </span>            : 
+<span class="lineNum">     328 </span><span class="lineCov">         18 :     void insertLiterals(char* cnfRep, Array&lt;Lit&gt;&amp; toFill) {</span>
+<span class="lineNum">     329 </span><span class="lineCov">         18 :         char* end = nullptr;</span>
+<span class="lineNum">     330 </span><span class="lineCov">         18 :         int64_t v = strtol(cnfRep, &amp;end, 10);</span>
+<span class="lineNum">     331 </span><span class="lineCov">         76 :         while (end != cnfRep) {</span>
+<span class="lineNum">     332 </span><span class="lineCov">         40 :             Lit l = VariablesManager::fromDimacs(v);</span>
+<span class="lineNum">     333 </span><span class="lineCov">         40 :             if (l != lit_Undef) {</span>
+<span class="lineNum">     334 </span><span class="lineCov">         40 :                 toFill.push(l);</span>
+<span class="lineNum">     335 </span>            :             }
+<span class="lineNum">     336 </span><span class="lineCov">         40 :             cnfRep = end;</span>
+<span class="lineNum">     337 </span><span class="lineCov">         40 :             v = strtol(cnfRep, &amp;end, 10);</span>
+<span class="lineNum">     338 </span>            :         }
+<a name="339"><span class="lineNum">     339 </span><span class="lineCov">         18 :     }</span></a>
+<span class="lineNum">     340 </span>            : 
+<span class="lineNum">     341 </span><span class="lineCov">          7 :     bool validateResolution() {</span>
+<span class="lineNum">     342 </span><span class="lineCov">          7 :         std::sort((Lit*) resolutions, resolutions.getSize() + (Lit*) resolutions);</span>
+<span class="lineNum">     343 </span><span class="lineCov">          7 :         if (verbose) {</span>
+<span class="lineNum">     344 </span><span class="lineCov">          7 :             fprintf(Logger::getDBLogger().getOutput(), &quot;c [dblog] &quot;);</span>
+<span class="lineNum">     345 </span><span class="lineCov">         36 :             for (unsigned int k = 0; k &lt; resolutions.getSize(); k++) {</span>
+<span class="lineNum">     346 </span><span class="lineCov">         29 :                 fprintf(Logger::getDBLogger().getOutput(), &quot;%d &quot;,</span>
+<span class="lineNum">     347 </span><span class="lineCov">         58 :                         VariablesManager::toDimacs(resolutions[k]));</span>
+<span class="lineNum">     348 </span>            :             }
+<span class="lineNum">     349 </span><span class="lineCov">          7 :             fprintf(Logger::getDBLogger().getOutput(), &quot;-&gt; &quot;);</span>
+<span class="lineNum">     350 </span>            :         }
+<span class="lineNum">     351 </span>            :         //first, remove doubles
+<span class="lineNum">     352 </span><span class="lineCov">          7 :         unsigned int i = 0, j = 0;</span>
+<span class="lineNum">     353 </span><span class="lineCov">         40 :         while (resolutions.getSize() &gt; 0 &amp;&amp; i &lt; resolutions.getSize()) {</span>
+<span class="lineNum">     354 </span><span class="lineCov">         26 :             unsigned int lPos = i;</span>
+<span class="lineNum">     355 </span>            :             //we search for the position with the highest index such that
+<span class="lineNum">     356 </span>            :             //resolutions[i] == resolutions[lPos]
+<span class="lineNum">     357 </span><span class="lineCov">         79 :             while (i + 1 &lt; resolutions.getSize() &amp;&amp;</span>
+<span class="lineNum">     358 </span><span class="lineCov">         24 :                     resolutions[i] == resolutions[i + 1]) {</span>
+<span class="lineNum">     359 </span><span class="lineCov">          3 :                 i++;</span>
+<span class="lineNum">     360 </span>            :             }
+<span class="lineNum">     361 </span><span class="lineCov">         41 :             if (j == 0 || VariablesManager::oppositeLit(resolutions[j - 1]) !=</span>
+<span class="lineNum">     362 </span><span class="lineCov">         15 :                     resolutions[lPos]) {</span>
+<span class="lineNum">     363 </span><span class="lineCov">         18 :                 resolutions[j] = resolutions[lPos];</span>
+<span class="lineNum">     364 </span><span class="lineCov">         18 :                 j++;</span>
+<span class="lineNum">     365 </span>            :             } else {
+<span class="lineNum">     366 </span><span class="lineCov">          8 :                 ASSERT(j &gt; 0);</span>
+<span class="lineNum">     367 </span><span class="lineCov">          8 :                 ASSERT_EQUAL(VariablesManager::oppositeLit(resolutions[j - 1]), resolutions[lPos]);</span>
+<span class="lineNum">     368 </span><span class="lineCov">          8 :                 j--;</span>
+<span class="lineNum">     369 </span>            :             }
+<span class="lineNum">     370 </span><span class="lineCov">         26 :             i++;</span>
+<span class="lineNum">     371 </span>            :         }
+<span class="lineNum">     372 </span><span class="lineCov">          7 :         resolutions.pop(i - j);</span>
+<span class="lineNum">     373 </span><span class="lineCov">          7 :         if (verbose) {</span>
+<span class="lineNum">     374 </span><span class="lineCov">         17 :             for (unsigned int k = 0; k &lt; resolutions.getSize(); k++) {</span>
+<span class="lineNum">     375 </span><span class="lineCov">         10 :                 fprintf(Logger::getDBLogger().getOutput(), &quot;%d &quot;,</span>
+<span class="lineNum">     376 </span><span class="lineCov">         20 :                         VariablesManager::toDimacs(resolutions[k]));</span>
+<span class="lineNum">     377 </span>            :             }
+<span class="lineNum">     378 </span><span class="lineCov">          7 :             fprintf(Logger::getDBLogger().getOutput(), &quot;\n&quot;);</span>
+<span class="lineNum">     379 </span>            :         }
+<span class="lineNum">     380 </span><span class="lineCov">          7 :         if (!(resolutions == currentClause)) {</span>
+<span class="lineNum">     381 </span><span class="lineCov">          1 :             fprintf(Logger::getDBLogger().getOutput(), &quot;c [dblog] error: clause &quot;);</span>
+<span class="lineNum">     382 </span><span class="lineCov">          5 :             for (unsigned int k = 0; k &lt; currentClause.getSize(); k++) {</span>
+<span class="lineNum">     383 </span><span class="lineCov">          4 :                 fprintf(Logger::getDBLogger().getOutput(), &quot;%d &quot;,</span>
+<span class="lineNum">     384 </span><span class="lineCov">          8 :                         VariablesManager::toDimacs(currentClause[k]));</span>
+<span class="lineNum">     385 </span>            :             }
+<span class="lineNum">     386 </span><span class="lineCov">          1 :             fprintf(Logger::getDBLogger().getOutput(), &quot;!= &quot;);</span>
+<span class="lineNum">     387 </span><span class="lineCov">          4 :             for (unsigned int k = 0; k &lt; resolutions.getSize(); k++) {</span>
+<span class="lineNum">     388 </span><span class="lineCov">          3 :                 fprintf(Logger::getDBLogger().getOutput(), &quot;%d &quot;,</span>
+<span class="lineNum">     389 </span><span class="lineCov">          6 :                         VariablesManager::toDimacs(resolutions[k]));</span>
+<span class="lineNum">     390 </span>            :             }
+<span class="lineNum">     391 </span><span class="lineCov">          1 :             fprintf(Logger::getDBLogger().getOutput(), &quot;\n&quot;);</span>
+<span class="lineNum">     392 </span><span class="lineCov">          1 :             result = false;</span>
+<span class="lineNum">     393 </span><span class="lineCov">          1 :             return false;</span>
+<span class="lineNum">     394 </span>            :         }
+<span class="lineNum">     395 </span><span class="lineCov">          6 :         return true;</span>
+<span class="lineNum">     396 </span>            :     }
+<span class="lineNum">     397 </span>            : 
+<span class="lineNum">     398 </span>            :     bool result;
+<span class="lineNum">     399 </span>            :     bool verbose;
+<span class="lineNum">     400 </span>            :     long currentClauseId;
+<span class="lineNum">     401 </span>            :     Array&lt;Lit&gt; currentClause;
+<span class="lineNum">     402 </span>            :     Array&lt;Lit&gt; resolutions;
+<span class="lineNum">     403 </span>            : 
+<a name="404"><span class="lineNum">     404 </span>            : };</a>
+<span class="lineNum">     405 </span>            : 
+<span class="lineNum">     406 </span><span class="lineCov">          2 : ResolutionChecker::~ResolutionChecker() {</span>
+<a name="407"><span class="lineNum">     407 </span><span class="lineCov">          2 : }</span></a>
+<span class="lineNum">     408 </span>            : 
+<span class="lineNum">     409 </span><span class="lineCov">          3 : bool DBWrapper::checkResolutions() {</span>
+<span class="lineNum">     410 </span><span class="lineCov">          3 :     if (internalDBEngine == nullptr) return true;</span>
+<span class="lineNum">     411 </span>            : #ifdef DEBUG
+<span class="lineNum">     412 </span><span class="lineCov">          2 :     if (produceLogs) fprintf(Logger::getDBLogger().getOutput(), &quot;c [dblog] %s\n&quot;, __PRETTY_FUNCTION__);</span>
+<span class="lineNum">     413 </span>            : #endif /* DEBUG */
+<span class="lineNum">     414 </span>            : 
+<span class="lineNum">     415 </span><span class="lineCov">          2 :     ResolutionChecker check(produceLogs);</span>
+<span class="lineNum">     416 </span>            :     executeQuery(&quot;SELECT resolution.resolvent, resolution.clause, clause.literals &quot;
+<span class="lineNum">     417 </span>            :             &quot;from resolution JOIN clause on resolution.resolvent = clause.id &quot;
+<span class="lineNum">     418 </span><span class="lineCov">          2 :             &quot;ORDER BY resolution.resolvent;&quot;, &amp;check);</span>
+<span class="lineNum">     419 </span>            : 
+<span class="lineNum">     420 </span><span class="lineCov">          2 :     return check.getResult();</span>
+<a name="421"><span class="lineNum">     421 </span>            : }</a>
+<span class="lineNum">     422 </span>            : 
+<span class="lineNum">     423 </span><span class="lineCov">          3 : class ClauseFinder : public QueryTreatment {</span>
+<a name="424"><span class="lineNum">     424 </span>            : public:</a>
+<span class="lineNum">     425 </span>            : 
+<span class="lineNum">     426 </span><span class="lineCov">          3 :     ClauseFinder() : nbClausesFound(0U) {</span>
+<span class="lineNum">     427 </span><span class="lineCov">          3 :     }</span>
+<span class="lineNum">     428 </span>            : 
+<a name="429"><span class="lineNum">     429 </span>            : #ifdef DEBUG</a>
+<span class="lineNum">     430 </span>            : 
+<span class="lineNum">     431 </span><span class="lineCov">          2 :     virtual int execute(int nbColumns, char**, char**) {</span>
+<span class="lineNum">     432 </span>            : #else
+<span class="lineNum">     433 </span>            : 
+<span class="lineNum">     434 </span>            :     virtual int execute(int, char**, char**) {
+<span class="lineNum">     435 </span>            : #endif /* DEBUG */
+<span class="lineNum">     436 </span><span class="lineCov">          2 :         ASSERT_EQUAL(1, nbColumns);</span>
+<span class="lineNum">     437 </span><span class="lineCov">          2 :         nbClausesFound++;</span>
+<span class="lineNum">     438 </span><span class="lineCov">          2 :         return SQLITE_OK;</span>
+<a name="439"><span class="lineNum">     439 </span>            :     }</a>
+<span class="lineNum">     440 </span>            : 
+<span class="lineNum">     441 </span><span class="lineCov">          3 :     unsigned int getNbClausesFound() {</span>
+<span class="lineNum">     442 </span><span class="lineCov">          3 :         return nbClausesFound;</span>
+<span class="lineNum">     443 </span>            :     }
+<span class="lineNum">     444 </span>            : 
+<span class="lineNum">     445 </span>            : private:
+<span class="lineNum">     446 </span>            : 
+<span class="lineNum">     447 </span>            :     unsigned int nbClausesFound;
+<span class="lineNum">     448 </span>            : 
+<a name="449"><span class="lineNum">     449 </span>            : };</a>
+<span class="lineNum">     450 </span>            : 
+<span class="lineNum">     451 </span><span class="lineCov">          3 : bool DBWrapper::checkContainsClause(const Lit * const c) {</span>
+<span class="lineNum">     452 </span><span class="lineCov">          3 :     if (internalDBEngine == nullptr) return true;</span>
+<span class="lineNum">     453 </span>            : #ifdef DEBUG
+<span class="lineNum">     454 </span><span class="lineCov">          3 :     if (produceLogs) fprintf(Logger::getDBLogger().getOutput(), &quot;c [dblog] %s\n&quot;, __PRETTY_FUNCTION__);</span>
+<span class="lineNum">     455 </span>            : #endif /* DEBUG */
+<span class="lineNum">     456 </span><span class="lineCov">          3 :     Array&lt;Lit&gt; clause;</span>
+<span class="lineNum">     457 </span><span class="lineCov">          6 :     for (unsigned int i = 0; c[i] != lit_Undef; i++) {</span>
+<span class="lineNum">     458 </span><span class="lineCov">          3 :         clause.push(c[i]);</span>
+<span class="lineNum">     459 </span>            :     }
+<span class="lineNum">     460 </span><span class="lineCov">          3 :     std::sort((Lit*) clause, clause.getSize() + (Lit*) clause);</span>
+<span class="lineNum">     461 </span><span class="lineCov">          6 :     ClauseFinder finder;</span>
+<span class="lineNum">     462 </span><span class="lineCov">          6 :     std::stringstream query;</span>
+<span class="lineNum">     463 </span><span class="lineCov">          3 :     query &lt;&lt; &quot;SELECT id FROM clause WHERE literals='&quot;;</span>
+<span class="lineNum">     464 </span><span class="lineCov">          6 :     for (unsigned int i = 0; i &lt; clause.getSize(); i++) {</span>
+<span class="lineNum">     465 </span><span class="lineCov">          3 :         query &lt;&lt; VariablesManager::toDimacs(clause[i]);</span>
+<span class="lineNum">     466 </span><span class="lineCov">          3 :         if (i + 1 &lt; clause.getSize()) {</span>
+<span class="lineNum">     467 </span><span class="lineCov">          1 :             query &lt;&lt; &quot; &quot;;</span>
+<span class="lineNum">     468 </span>            :         }
+<span class="lineNum">     469 </span>            :     }
+<span class="lineNum">     470 </span><span class="lineCov">          3 :     query &lt;&lt; &quot;';&quot;;</span>
+<span class="lineNum">     471 </span><span class="lineCov">          3 :     executeQuery(query.str().c_str(), &amp;finder);</span>
+<span class="lineNum">     472 </span><span class="lineCov">          6 :     return finder.getNbClausesFound() &gt; 0;</span>
+<a name="473"><span class="lineNum">     473 </span>            : }</a>
+<span class="lineNum">     474 </span>            : 
+<span class="lineNum">     475 </span><span class="lineCov">        457 : bool DBWrapper::executeQuery(const char* query) {</span>
+<span class="lineNum">     476 </span><span class="lineCov">        457 :     return executeQuery(query, nullptr);</span>
+<a name="477"><span class="lineNum">     477 </span>            : }</a>
+<span class="lineNum">     478 </span>            : 
+<span class="lineNum">     479 </span><span class="lineCov">        474 : bool DBWrapper::executeQuery(const char* query, QueryTreatment* treat) {</span>
+<span class="lineNum">     480 </span><span class="lineCov">        474 :     if (internalDBEngine == nullptr) return true;</span>
+<span class="lineNum">     481 </span><span class="lineCov">        474 :     if (produceLogs) fprintf(Logger::getDBLogger().getOutput(), &quot;c [dblog] executing '%s'\n&quot;, query);</span>
+<span class="lineNum">     482 </span>            : 
+<span class="lineNum">     483 </span><span class="lineCov">        474 :     char* errorMessages = nullptr;</span>
+<span class="lineNum">     484 </span>            :     int retVal;
+<span class="lineNum">     485 </span><span class="lineCov">        474 :     if (treat != nullptr) {</span>
+<span class="lineNum">     486 </span>            :         retVal = sqlite3_exec(internalDBEngine,
+<span class="lineNum">     487 </span><span class="lineCov">         17 :                 query, &amp;executeTreatment, (void*) treat, &amp;errorMessages);</span>
+<span class="lineNum">     488 </span>            :     } else {
+<span class="lineNum">     489 </span>            :         retVal = sqlite3_exec(internalDBEngine,
+<span class="lineNum">     490 </span><span class="lineCov">        457 :                 query, nullptr, nullptr, &amp;errorMessages);</span>
+<span class="lineNum">     491 </span>            :     }
+<span class="lineNum">     492 </span><span class="lineCov">        474 :     if (retVal != SQLITE_OK) {</span>
+<span class="lineNum">     493 </span><span class="lineCov">          2 :         fprintf(Logger::getDBLogger().getOutput(),</span>
+<span class="lineNum">     494 </span>            : #if SQLITE_VERSION_NUMBER &gt; 3007016
+<span class="lineNum">     495 </span><span class="lineCov">          4 :                 &quot;c [dblog] error: %s, %s\n&quot;, sqlite3_errstr(retVal), errorMessages);</span>
+<span class="lineNum">     496 </span>            : #else
+<span class="lineNum">     497 </span>            :                 &quot;c [dblog] error: %s, %s\n&quot;, sqlite3_errmsg(internalDBEngine), errorMessages);
+<span class="lineNum">     498 </span>            : #endif
+<span class="lineNum">     499 </span><span class="lineCov">          2 :         SATURNIN_TRACE(Logger::getDBLogger());</span>
+<span class="lineNum">     500 </span><span class="lineCov">          2 :         sqlite3_free(errorMessages);</span>
+<span class="lineNum">     501 </span><span class="lineCov">          2 :         return false;</span>
+<span class="lineNum">     502 </span>            :     }
+<span class="lineNum">     503 </span><span class="lineCov">        472 :     return true;</span>
+<span class="lineNum">     504 </span>            : }
+<span class="lineNum">     505 </span>            : 
+<span class="lineNum">     506 </span>            : #endif /* SATURNIN_DB */
+<span class="lineNum">     507 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.10</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

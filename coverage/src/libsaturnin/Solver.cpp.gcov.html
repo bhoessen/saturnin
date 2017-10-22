@@ -1,0 +1,1856 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - saturnin-coverage.info.cleaned - src/libsaturnin/Solver.cpp</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">src/libsaturnin</a> - Solver.cpp<span style="font-size: 80%;"> (source / <a href="Solver.cpp.func.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">saturnin-coverage.info.cleaned</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">946</td>
+            <td class="headerCovTableEntry">999</td>
+            <td class="headerCovTableEntryHi">94.7 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2017-10-22</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">37</td>
+            <td class="headerCovTableEntry">37</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : #include &quot;saturnin/Solver.h&quot;</a>
+<span class="lineNum">       2 </span>            : 
+<span class="lineNum">       3 </span>            : #include &quot;saturnin/Array.h&quot;             // for Array
+<span class="lineNum">       4 </span>            : #include &quot;saturnin/Assert.h&quot;            // for ASSERT, ASSERT_EQUAL, SKIP
+<span class="lineNum">       5 </span>            : #include &quot;saturnin/Clause.h&quot;            // for Clause, watcher_t, etc
+<span class="lineNum">       6 </span>            : #include &quot;saturnin/ClauseAllocator.h&quot;   // for ClauseAllocator
+<span class="lineNum">       7 </span>            : #include &quot;saturnin/Fifo.h&quot;              // for Fifo
+<span class="lineNum">       8 </span>            : #include &quot;saturnin/Heap.h&quot;              // for Heap
+<span class="lineNum">       9 </span>            : #include &quot;saturnin/Logger.h&quot;            // for Logger
+<span class="lineNum">      10 </span>            : #include &quot;saturnin/Mean.h&quot;              // for Mean
+<span class="lineNum">      11 </span>            : #include &quot;saturnin/RandomGenerator.h&quot;   // for RandomGenerator
+<span class="lineNum">      12 </span>            : #include &quot;saturnin/SlidingMean.h&quot;       // for SlidingMean
+<span class="lineNum">      13 </span>            : #include &quot;saturnin/VariablesManager.h&quot;  // for Lit, VariablesManager, Var, etc
+<span class="lineNum">      14 </span>            : #include &quot;saturnin/WeakBool.h&quot;          // for wbool, wUnknown, wFalse, etc
+<span class="lineNum">      15 </span>            : 
+<span class="lineNum">      16 </span>            : #ifdef SATURNIN_PARALLEL
+<span class="lineNum">      17 </span>            : #include &quot;saturnin/ParallelSolver.h&quot;    // for ParallelSolver
+<span class="lineNum">      18 </span>            : #endif /* SATURNIN_PARALLEL */
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : #include &lt;string.h&gt;                     // for memccpy, memmove
+<span class="lineNum">      21 </span>            : #include &lt;limits&gt;                       // for numeric_limits
+<span class="lineNum">      22 </span>            : #include &lt;cstring&gt;                      // for memcpy
+<span class="lineNum">      23 </span>            : #include &lt;cinttypes&gt;                    // for PRIu64
+<span class="lineNum">      24 </span>            : 
+<span class="lineNum">      25 </span>            : #include &quot;../Utils.h&quot;                   // for SATURNIN_BEGIN_PROFILE, etc
+<span class="lineNum">      26 </span>            : 
+<span class="lineNum">      27 </span>            : using namespace saturnin;
+<a name="28"><span class="lineNum">      28 </span>            : </a>
+<span class="lineNum">      29 </span>            : 
+<span class="lineNum">      30 </span><span class="lineCov">         48 : Solver::Solver(unsigned int i, unsigned int nbClauses, const char* </span>
+<span class="lineNum">      31 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">      32 </span>            : dbFileName
+<span class="lineNum">      33 </span>            : #endif /* SATURNIN_DB */
+<span class="lineNum">      34 </span>            : ) :
+<span class="lineNum">      35 </span>            : asyncStop(false),
+<span class="lineNum">      36 </span>            : #ifdef PROFILE
+<span class="lineNum">      37 </span>            : __profile_propagateMono(0), __profile_propagateBin(0), __profile_propagateWatched(0),
+<span class="lineNum">      38 </span>            : __profile_reduce(0), __profile_analyze(0), __profile_simplify(0),
+<span class="lineNum">      39 </span>            : #endif /* PROFILE */
+<span class="lineNum">      40 </span>            : nbVar(i),
+<span class="lineNum">      41 </span>            : varLevel(nbVar), assign(nbVar), presumption(nbVar), phase(nbVar), previousPhase(nbVar),
+<span class="lineNum">      42 </span>            : phaseHammingDistance(0), lastReduceSeen(nbVar), nbVarSeenBtwReduce(0), minDeviation(100.0),
+<span class="lineNum">      43 </span>            : binReasons(nbVar * 3), nbBin(0), reasons(nbVar), binWatched(nbVar * 2),
+<span class="lineNum">      44 </span>            : watchedClauses(nbVar * 2), monowatch(nbVar * 2), varActivityValue(nbVar),
+<span class="lineNum">      45 </span>            : varActivity(nbVar, VSIDSComp(*this)),
+<span class="lineNum">      46 </span>            : vsidsInc(1.0), vsidsDec(0.95),
+<span class="lineNum">      47 </span>            : clauses(nbClauses), learntClauses(1024),
+<span class="lineNum">      48 </span>            : propagationQueue(128), stack(nbVar), stackPointer(256), assignLevel(0),
+<span class="lineNum">      49 </span>            : nbLitRemoved(0),
+<span class="lineNum">      50 </span>            : nbConfBeforeReduce(500), reduceIncrement(100), reduceLimit(500),
+<span class="lineNum">      51 </span>            : nbReducePerformed(0), nbClauseRemoved(0),
+<span class="lineNum">      52 </span>            : localLbdAverageLength(50), lbdDifferenceFactor(0.8), lbdMean(), stackSize(5000), stackDifferenceFactor(1.4),
+<span class="lineNum">      53 </span>            : restarts(0), nbPropag(0), conflicts(0), state(wUnknown),
+<span class="lineNum">      54 </span>            : uvalue(1), vvalue(1), factor(512),
+<span class="lineNum">      55 </span>            : allocator(10, 16), levelLBDChecked(nbVar), lbdTimeStamp(0), lbdValues(25),
+<span class="lineNum">      56 </span>            : seen(nbVar), map(nbVar), revertMap(nbVar), nextVarMap(0),
+<span class="lineNum">      57 </span>            : pureLitSearch(nbVar * 2), nbPureLitSearch(0), nbPureLitFound(0),
+<span class="lineNum">      58 </span>            : nbInitialClausesReduced(0), nbInitialClausesRemoved(0), verbosity(1)
+<span class="lineNum">      59 </span>            : #ifdef SATURNIN_PARALLEL
+<span class="lineNum">      60 </span>            : , exchangedClauses(10, 16), parallelData(nullptr), threadId(0)
+<span class="lineNum">      61 </span>            : #endif /* SATURNIN_PARALLEL */
+<span class="lineNum">      62 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">      63 </span><span class="lineCov">         48 : , db(dbFileName)</span>
+<span class="lineNum">      64 </span>            : #endif
+<span class="lineNum">      65 </span>            : {
+<span class="lineNum">      66 </span><span class="lineCov">         48 :     ASSERT(i != 0);</span>
+<span class="lineNum">      67 </span><span class="lineCov">         48 :     ASSERT(nbClauses != 0);</span>
+<span class="lineNum">      68 </span>            :     //make sure we have enough space to holds up to the last variable
+<span class="lineNum">      69 </span><span class="lineCov">         48 :     ensureCapacity(nbVar - 1, 0);</span>
+<span class="lineNum">      70 </span><span class="lineCov">         48 :     ASSERT_EQUAL(nbVar, assign.getSize());</span>
+<span class="lineNum">      71 </span><span class="lineCov">         48 :     stackPointer.push(0);</span>
+<a name="72"><span class="lineNum">      72 </span><span class="lineCov">         48 : }</span></a>
+<span class="lineNum">      73 </span>            : 
+<span class="lineNum">      74 </span><span class="lineCov">         96 : Solver::~Solver() {</span>
+<span class="lineNum">      75 </span><span class="lineCov">      67398 :     while (clauses.getSize() &gt; 0) {</span>
+<span class="lineNum">      76 </span><span class="lineCov">      67302 :         Clause* a = clauses.get(clauses.getSize() - 1);</span>
+<span class="lineNum">      77 </span><span class="lineCov">      67302 :         clauses.pop();</span>
+<span class="lineNum">      78 </span><span class="lineCov">      67302 :         allocator.releaseClause(a);</span>
+<span class="lineNum">      79 </span>            :     }
+<span class="lineNum">      80 </span><span class="lineCov">      11284 :     while (learntClauses.getSize() &gt; 0) {</span>
+<span class="lineNum">      81 </span><span class="lineCov">      11188 :         Clause* a = learntClauses.get(learntClauses.getSize() - 1);</span>
+<span class="lineNum">      82 </span><span class="lineCov">      11188 :         learntClauses.pop();</span>
+<span class="lineNum">      83 </span><span class="lineCov">      11188 :         allocator.releaseClause(a);</span>
+<span class="lineNum">      84 </span>            :     }
+<a name="85"><span class="lineNum">      85 </span><span class="lineCov">         48 : }</span></a>
+<span class="lineNum">      86 </span>            : 
+<span class="lineNum">      87 </span><span class="lineCov">     197248 : bool Solver::addClause(const Lit * const literals, unsigned int sz, bool mapped) {</span>
+<span class="lineNum">      88 </span><span class="lineCov">     197248 :     ASSERT(sz != 0);</span>
+<span class="lineNum">      89 </span><span class="lineCov">     197170 :     ASSERT_EQUAL((unsigned int) 0, assignLevel);</span>
+<span class="lineNum">      90 </span><span class="lineCov">     197195 :     ASSERT_EQUAL(1U, stackPointer.getSize());</span>
+<span class="lineNum">      91 </span>            :     //if the formula was found SAT and we add a new clause, we may have UNSAT
+<span class="lineNum">      92 </span>            :     //now
+<span class="lineNum">      93 </span><span class="lineCov">     197021 :     if (state == wTrue) {</span>
+<span class="lineNum">      94 </span><span class="lineNoCov">          0 :         state = wUnknown;</span>
+<span class="lineNum">      95 </span>            :     }
+<span class="lineNum">      96 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">      97 </span><span class="lineCov">     197021 :     mapped = mapped || db.isInitialized();</span>
+<span class="lineNum">      98 </span>            : #endif
+<span class="lineNum">      99 </span><span class="lineCov">     197252 :     ArrayHelper&lt;Lit&gt; _hlp(sz);</span>
+<span class="lineNum">     100 </span><span class="lineCov">     197396 :     Lit* internalClause = (Lit*) _hlp;</span>
+<span class="lineNum">     101 </span><span class="lineCov">     197244 :     if (mapped) {</span>
+<span class="lineNum">     102 </span><span class="lineCov">      46117 :         for (unsigned int i = 0; i &lt; sz; i++) {</span>
+<span class="lineNum">     103 </span><span class="lineCov">      32953 :             internalClause[i] = literals[i];</span>
+<span class="lineNum">     104 </span>            :         }
+<span class="lineNum">     105 </span>            :     } else {
+<span class="lineNum">     106 </span><span class="lineCov">     827506 :         for (unsigned int i = 0; i &lt; sz; i++) {</span>
+<span class="lineNum">     107 </span><span class="lineCov">     643446 :             Var v = VariablesManager::getVar(literals[i]);</span>
+<span class="lineNum">     108 </span><span class="lineCov">     642335 :             ensureCapacity(v, nbVar);</span>
+<span class="lineNum">     109 </span><span class="lineCov">     642449 :             if (map[v] == var_Undef) {</span>
+<span class="lineNum">     110 </span><span class="lineCov">      65458 :                 map[v] = nextVarMap;</span>
+<span class="lineNum">     111 </span><span class="lineCov">      65467 :                 revertMap[nextVarMap] = v;</span>
+<span class="lineNum">     112 </span><span class="lineCov">      65320 :                 nextVarMap++;</span>
+<span class="lineNum">     113 </span>            :             }
+<span class="lineNum">     114 </span><span class="lineCov">     643155 :             internalClause[i] = VariablesManager::getLit(map[v], VariablesManager::getLitSign(literals[i]));</span>
+<span class="lineNum">     115 </span>            :         }
+<span class="lineNum">     116 </span>            :     }
+<span class="lineNum">     117 </span><span class="lineCov">     197224 :     if (sz == 1) {</span>
+<span class="lineNum">     118 </span><span class="lineCov">        698 :         Lit l = internalClause[0];</span>
+<span class="lineNum">     119 </span><span class="lineCov">        698 :         Var v = VariablesManager::getVar(l);</span>
+<span class="lineNum">     120 </span><span class="lineCov">        700 :         wbool b = VariablesManager::getLitSign(l) ? wTrue : wFalse;</span>
+<span class="lineNum">     121 </span><span class="lineCov">        697 :         ensureCapacity(v, nbVar);</span>
+<span class="lineNum">     122 </span>            : 
+<span class="lineNum">     123 </span>            :         //Check if we didn't prove the opposite literal
+<span class="lineNum">     124 </span><span class="lineCov">        698 :         if (assign[v] != wUnknown &amp;&amp; assign[v] != b) {</span>
+<span class="lineNum">     125 </span>            :             //we try to add the fact l where we already know ¬l
+<span class="lineNum">     126 </span><span class="lineCov">          4 :             state = wFalse;</span>
+<span class="lineNum">     127 </span><span class="lineCov">          4 :             return false;</span>
+<span class="lineNum">     128 </span>            :         }
+<span class="lineNum">     129 </span><span class="lineCov">        692 :         assign[v] = b;</span>
+<span class="lineNum">     130 </span><span class="lineCov">        695 :         phase[v] = b;</span>
+<span class="lineNum">     131 </span><span class="lineCov">        693 :         varLevel[v] = 0;</span>
+<span class="lineNum">     132 </span><span class="lineCov">        693 :         propagationQueue.push(VariablesManager::oppositeLit(l));</span>
+<span class="lineNum">     133 </span><span class="lineCov">        696 :         stack.push(l);</span>
+<span class="lineNum">     134 </span>            :         
+<span class="lineNum">     135 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">     136 </span>            :         Lit dbC[2];
+<span class="lineNum">     137 </span><span class="lineCov">        695 :         dbC[0] = l;</span>
+<span class="lineNum">     138 </span><span class="lineCov">        695 :         dbC[1] = std::numeric_limits&lt;Lit&gt;::max();</span>
+<span class="lineNum">     139 </span><span class="lineCov">        696 :         long id = db.nbClausesAdded();</span>
+<span class="lineNum">     140 </span><span class="lineCov">        695 :         db.addClause(dbC, id);</span>
+<span class="lineNum">     141 </span>            : #endif
+<span class="lineNum">     142 </span>            : 
+<span class="lineNum">     143 </span><span class="lineCov">        694 :         Lit* conflict = propagate();</span>
+<span class="lineNum">     144 </span><span class="lineCov">        695 :         if(conflict != nullptr) {</span>
+<span class="lineNum">     145 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">     146 </span>            :             //compute the reason of the conflict and add the empty clause to
+<span class="lineNum">     147 </span>            :             //the database
+<span class="lineNum">     148 </span><span class="lineCov">          3 :             Array&lt;Lit&gt; learnt(2);</span>
+<span class="lineNum">     149 </span><span class="lineCov">          3 :             computeLearntClause(conflict, learnt);</span>
+<span class="lineNum">     150 </span><span class="lineCov">          3 :             db.addClause(&amp;lit_Undef, db.nbClausesAdded());</span>
+<span class="lineNum">     151 </span>            : #endif /* SATURNIN_DB */
+<span class="lineNum">     152 </span><span class="lineCov">          3 :             state = wFalse;</span>
+<span class="lineNum">     153 </span><span class="lineCov">          3 :             return false;</span>
+<span class="lineNum">     154 </span>            :         } else {
+<span class="lineNum">     155 </span><span class="lineCov">        692 :             return true;</span>
+<span class="lineNum">     156 </span>            :         }
+<span class="lineNum">     157 </span><span class="lineCov">     196526 :     } else if (sz == 2) {</span>
+<span class="lineNum">     158 </span><span class="lineCov">     119550 :         Lit a = internalClause[0];</span>
+<span class="lineNum">     159 </span><span class="lineCov">     119550 :         Var va = VariablesManager::getVar(a);</span>
+<span class="lineNum">     160 </span><span class="lineCov">     119591 :         ensureCapacity(va, nbVar);</span>
+<span class="lineNum">     161 </span><span class="lineCov">     119600 :         wbool ba = VariablesManager::getLitSign(a) ? wTrue : wFalse;</span>
+<span class="lineNum">     162 </span><span class="lineCov">     119539 :         if (assign[va] != wUnknown) {</span>
+<span class="lineNum">     163 </span>            :             //either a has been proven or ¬a
+<span class="lineNum">     164 </span><span class="lineCov">        783 :             if (assign[va] == ba) {</span>
+<span class="lineNum">     165 </span>            :                 //the binary clause will always be satisfied
+<span class="lineNum">     166 </span><span class="lineCov">       1852 :                 return true;</span>
+<span class="lineNum">     167 </span>            :             } else {
+<span class="lineNum">     168 </span>            :                 //only the second literal may be not assign
+<span class="lineNum">     169 </span><span class="lineCov">        308 :                 return addClause(internalClause + 1, 1, true);</span>
+<span class="lineNum">     170 </span>            :             }
+<span class="lineNum">     171 </span>            :         }
+<span class="lineNum">     172 </span><span class="lineCov">     118780 :         Lit b = internalClause[1];</span>
+<span class="lineNum">     173 </span><span class="lineCov">     118780 :         Var vb = VariablesManager::getVar(b);</span>
+<span class="lineNum">     174 </span><span class="lineCov">     118807 :         ensureCapacity(vb, nbVar);</span>
+<span class="lineNum">     175 </span><span class="lineCov">     118822 :         wbool bb = VariablesManager::getLitSign(b) ? wTrue : wFalse;</span>
+<span class="lineNum">     176 </span><span class="lineCov">     118610 :         if (assign[vb] != wUnknown) {</span>
+<span class="lineNum">     177 </span>            :             //either a has been proven or ¬a
+<span class="lineNum">     178 </span><span class="lineCov">        596 :             if (assign[vb] == bb) {</span>
+<span class="lineNum">     179 </span>            :                 //the binary clause will always be satisfied
+<span class="lineNum">     180 </span><span class="lineCov">        394 :                 return true;</span>
+<span class="lineNum">     181 </span>            :             } else {
+<span class="lineNum">     182 </span>            :                 //only the first literal may be not assign
+<span class="lineNum">     183 </span><span class="lineCov">        204 :                 return addClause(internalClause, 1, true);</span>
+<span class="lineNum">     184 </span>            :             }
+<span class="lineNum">     185 </span>            :         }
+<span class="lineNum">     186 </span>            : 
+<span class="lineNum">     187 </span><span class="lineCov">     118136 :         binWatched[a].push(b);</span>
+<span class="lineNum">     188 </span><span class="lineCov">     115423 :         binWatched[b].push(a);</span>
+<span class="lineNum">     189 </span>            :         
+<span class="lineNum">     190 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">     191 </span>            :         Lit clDB[3];
+<span class="lineNum">     192 </span><span class="lineCov">     116031 :         clDB[0] = a;</span>
+<span class="lineNum">     193 </span><span class="lineCov">     116031 :         clDB[1] = b;</span>
+<span class="lineNum">     194 </span><span class="lineCov">     116031 :         clDB[2] = std::numeric_limits&lt;Lit&gt;::max();</span>
+<span class="lineNum">     195 </span><span class="lineCov">     116146 :         db.addClause(clDB, db.nbClausesAdded());</span>
+<span class="lineNum">     196 </span>            : #endif /* SATURNIN_DB */
+<span class="lineNum">     197 </span><span class="lineCov">     118209 :         nbBin++;</span>
+<span class="lineNum">     198 </span>            : 
+<span class="lineNum">     199 </span>            : 
+<span class="lineNum">     200 </span>            :     } else {
+<span class="lineNum">     201 </span>            :         //simplify according to the current knowledge
+<span class="lineNum">     202 </span><span class="lineCov">      76976 :         Array&lt;Lit&gt; tmp(sz);</span>
+<span class="lineNum">     203 </span><span class="lineCov">    1025202 :         for (unsigned int i = 0; i &lt; sz; i++) {</span>
+<span class="lineNum">     204 </span><span class="lineCov">     436150 :             Lit l = internalClause[i];</span>
+<span class="lineNum">     205 </span><span class="lineCov">     436150 :             Var v = VariablesManager::getVar(l);</span>
+<span class="lineNum">     206 </span><span class="lineCov">     436297 :             wbool b = VariablesManager::getLitSign(l) ? wTrue : wFalse;</span>
+<span class="lineNum">     207 </span><span class="lineCov">     436129 :             ensureCapacity(v, nbVar);</span>
+<span class="lineNum">     208 </span>            : 
+<span class="lineNum">     209 </span>            :             //check if v hasn't been proved to be the other value
+<span class="lineNum">     210 </span><span class="lineCov">     436282 :             if (assign[v] == wUnknown) {</span>
+<span class="lineNum">     211 </span>            : 
+<span class="lineNum">     212 </span>            :                 //check that we didn't already have added l or ¬l
+<span class="lineNum">     213 </span><span class="lineCov">     431349 :                 Lit nl = VariablesManager::oppositeLit(l);</span>
+<span class="lineNum">     214 </span><span class="lineCov">     431298 :                 bool skip = false;</span>
+<span class="lineNum">     215 </span><span class="lineCov">    8510630 :                 for (unsigned int j = 0; !skip &amp;&amp; j &lt; tmp.getSize(); j++) {</span>
+<span class="lineNum">     216 </span><span class="lineCov">    8079516 :                     if (tmp[j] == l) {</span>
+<span class="lineNum">     217 </span><span class="lineCov">       3261 :                         skip = true;</span>
+<span class="lineNum">     218 </span><span class="lineCov">    8075467 :                     } else if (tmp[j] == nl) {</span>
+<span class="lineNum">     219 </span>            :                         //the clause contains l and ¬l. Therefore, this clause
+<span class="lineNum">     220 </span>            :                         //will always be true
+<span class="lineNum">     221 </span><span class="lineCov">        578 :                         return true;</span>
+<span class="lineNum">     222 </span>            :                     }
+<span class="lineNum">     223 </span>            :                 }
+<span class="lineNum">     224 </span><span class="lineCov">     431601 :                 if (!skip) {</span>
+<span class="lineNum">     225 </span><span class="lineCov">     431579 :                     tmp.push(l);</span>
+<span class="lineNum">     226 </span>            :                 }
+<span class="lineNum">     227 </span>            :             } else {
+<span class="lineNum">     228 </span>            :                 //either l or ¬l has been proved
+<span class="lineNum">     229 </span><span class="lineCov">       4687 :                 if (assign[v] == b) {</span>
+<span class="lineNum">     230 </span>            :                     //bingo, one of the literal has been proven true. Therefore
+<span class="lineNum">     231 </span>            :                     //the clause will always be true
+<span class="lineNum">     232 </span><span class="lineCov">        576 :                     return true;</span>
+<span class="lineNum">     233 </span>            :                 } else {
+<span class="lineNum">     234 </span>            :                     //the clause contains a literals that has been proven false
+<span class="lineNum">     235 </span>            :                     //It is therefore useless to add it
+<span class="lineNum">     236 </span><span class="lineCov">       4113 :                     SKIP;</span>
+<span class="lineNum">     237 </span>            :                 }
+<span class="lineNum">     238 </span>            :             }
+<span class="lineNum">     239 </span>            :         }
+<span class="lineNum">     240 </span><span class="lineCov">      76451 :         if (tmp.getSize() == 0) {</span>
+<span class="lineNum">     241 </span>            :             //The clause is now empty, therefore the instance is UNSAT
+<span class="lineNum">     242 </span><span class="lineCov">          1 :             state = wFalse;</span>
+<span class="lineNum">     243 </span><span class="lineCov">          1 :             return false;</span>
+<span class="lineNum">     244 </span><span class="lineCov">      76479 :         } else if (tmp.getSize() == 1) {</span>
+<span class="lineNum">     245 </span><span class="lineCov">         22 :             return addClause((const Lit*) tmp, 1, true);</span>
+<span class="lineNum">     246 </span><span class="lineCov">      76441 :         } else if (tmp.getSize() == 2) {</span>
+<span class="lineNum">     247 </span><span class="lineCov">       3567 :             return addClause((const Lit*) tmp, 2, true);</span>
+<span class="lineNum">     248 </span>            :         }
+<span class="lineNum">     249 </span>            : 
+<span class="lineNum">     250 </span>            :         //TODO: check that the clause doesn't already exist
+<span class="lineNum">     251 </span>            : 
+<span class="lineNum">     252 </span>            :         //TODO: use a more intelligent sort, and do it before in order
+<span class="lineNum">     253 </span>            :         //      the operation in O(n log) instead of O(n²) (and even O(n)?)
+<span class="lineNum">     254 </span>            :         //      the intelligent sort must be fast for integers that all have
+<span class="lineNum">     255 </span>            :         //      different values
+<span class="lineNum">     256 </span><span class="lineCov">     496924 :         for (unsigned int k = 0; k &lt; tmp.getSize(); k++) {</span>
+<span class="lineNum">     257 </span><span class="lineCov">    8497259 :             for (unsigned int l = k + 1; l &lt; tmp.getSize(); l++) {</span>
+<span class="lineNum">     258 </span><span class="lineCov">    8075034 :                 if (tmp[k] &gt; tmp[l]) {</span>
+<span class="lineNum">     259 </span><span class="lineCov">     606478 :                     Lit t = tmp[k];</span>
+<span class="lineNum">     260 </span><span class="lineCov">     606552 :                     tmp[k] = tmp[l];</span>
+<span class="lineNum">     261 </span><span class="lineCov">     606533 :                     tmp[l] = t;</span>
+<span class="lineNum">     262 </span>            :                 }
+<span class="lineNum">     263 </span>            :             }
+<span class="lineNum">     264 </span>            :         }
+<span class="lineNum">     265 </span>            : 
+<span class="lineNum">     266 </span><span class="lineCov">      72849 :         Clause* newClause = allocator.createClause(tmp);</span>
+<span class="lineNum">     267 </span><span class="lineCov">      72862 :         addWatchedClause(newClause);</span>
+<span class="lineNum">     268 </span>            : 
+<span class="lineNum">     269 </span>            : 
+<span class="lineNum">     270 </span>            :         //TODO: update the counters of nb clause per literal
+<span class="lineNum">     271 </span>            : 
+<span class="lineNum">     272 </span><span class="lineCov">      72830 :         clauses.push(newClause);</span>
+<span class="lineNum">     273 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">     274 </span><span class="lineCov">      72320 :         db.addClause((Lit*)newClause, db.nbClausesAdded());</span>
+<span class="lineNum">     275 </span>            : #endif /* SATURNIN_NODB */
+<span class="lineNum">     276 </span>            : 
+<span class="lineNum">     277 </span>            :     }
+<span class="lineNum">     278 </span><span class="lineCov">     191107 :     return true;</span>
+<a name="279"><span class="lineNum">     279 </span>            : }</a>
+<span class="lineNum">     280 </span>            : 
+<span class="lineNum">     281 </span><span class="lineCov">      12900 : Clause* Solver::addLearntClause(const Array&lt;Lit&gt;&amp; clause) {</span>
+<span class="lineNum">     282 </span>            : 
+<span class="lineNum">     283 </span><span class="lineCov">      12900 :     ASSERT(clause.getSize() &gt; 0);</span>
+<span class="lineNum">     284 </span><span class="lineCov">      12901 :     if (clause.getSize() == 1) {</span>
+<span class="lineNum">     285 </span><span class="lineCov">         18 :         enqueue(clause[0U]);</span>
+<span class="lineNum">     286 </span><span class="lineCov">         18 :         return nullptr;</span>
+<span class="lineNum">     287 </span><span class="lineCov">      12882 :     } else if (clause.getSize() == 2) {</span>
+<span class="lineNum">     288 </span><span class="lineCov">        222 :         Lit a = clause[0U];</span>
+<span class="lineNum">     289 </span><span class="lineCov">        223 :         Var va = VariablesManager::getVar(a);</span>
+<span class="lineNum">     290 </span><span class="lineCov">        223 :         Lit b = clause[1U];</span>
+<span class="lineNum">     291 </span><span class="lineCov">        223 :         binWatched[a].push(b);</span>
+<span class="lineNum">     292 </span><span class="lineCov">        223 :         binWatched[b].push(a);</span>
+<span class="lineNum">     293 </span><span class="lineCov">        223 :         nbBin++;</span>
+<span class="lineNum">     294 </span><span class="lineCov">        223 :         binReasons[3 * va] = a;</span>
+<span class="lineNum">     295 </span><span class="lineCov">        223 :         binReasons[3 * va + 1] = b;</span>
+<span class="lineNum">     296 </span><span class="lineCov">        223 :         ASSERT_EQUAL(lit_Undef, binReasons[3 * va + 2]);</span>
+<span class="lineNum">     297 </span><span class="lineCov">        223 :         Lit* reason = ((Lit*) binReasons) + 3 * va;</span>
+<span class="lineNum">     298 </span><span class="lineCov">        223 :         enqueue(a, reason);</span>
+<span class="lineNum">     299 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">     300 </span><span class="lineCov">        223 :         db.addClause((Lit*)reason, db.nbClausesAdded());</span>
+<span class="lineNum">     301 </span>            : #endif /* SATURNIN_DB */
+<span class="lineNum">     302 </span><span class="lineCov">        223 :         return nullptr;</span>
+<span class="lineNum">     303 </span>            :     } else {
+<span class="lineNum">     304 </span><span class="lineCov">      12659 :         Clause* newClause = allocator.createClause(clause);</span>
+<span class="lineNum">     305 </span><span class="lineCov">      12660 :         addWatchedClause(newClause);</span>
+<span class="lineNum">     306 </span>            : 
+<span class="lineNum">     307 </span><span class="lineCov">      12660 :         ASSERT(newClause-&gt;isAttached());</span>
+<span class="lineNum">     308 </span>            : 
+<span class="lineNum">     309 </span><span class="lineCov">      12660 :         unsigned int lbd = computeLBD(newClause);</span>
+<span class="lineNum">     310 </span><span class="lineCov">      12660 :         ASSERT(lbd != 0);</span>
+<span class="lineNum">     311 </span><span class="lineCov">      25588 :         while (lbd &gt;= lbdValues.getSize()) {</span>
+<span class="lineNum">     312 </span><span class="lineCov">        268 :             lbdValues.push(0);</span>
+<span class="lineNum">     313 </span>            :         }
+<span class="lineNum">     314 </span><span class="lineCov">      12660 :         lbdValues[lbd]++;</span>
+<span class="lineNum">     315 </span><span class="lineCov">      12660 :         newClause-&gt;setLBD(lbd);</span>
+<span class="lineNum">     316 </span>            : 
+<span class="lineNum">     317 </span><span class="lineCov">      12660 :         newClause-&gt;setIndex(learntClauses.getSize());</span>
+<span class="lineNum">     318 </span><span class="lineCov">      12660 :         learntClauses.push(newClause);</span>
+<span class="lineNum">     319 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">     320 </span><span class="lineCov">      12659 :         db.addClause((Lit*)newClause, db.nbClausesAdded());</span>
+<span class="lineNum">     321 </span>            : #endif /* SATURNIN_DB */
+<span class="lineNum">     322 </span><span class="lineCov">      12657 :         ASSERT(newClause-&gt;isLearnt());</span>
+<span class="lineNum">     323 </span>            : 
+<span class="lineNum">     324 </span>            :         //TODO: Update the counters
+<span class="lineNum">     325 </span>            : 
+<span class="lineNum">     326 </span>            :         //TODO: check if we must export the clause
+<span class="lineNum">     327 </span>            : 
+<span class="lineNum">     328 </span><span class="lineCov">      12660 :         enqueue(clause[0U], newClause-&gt;lits());</span>
+<span class="lineNum">     329 </span>            : 
+<span class="lineNum">     330 </span><span class="lineCov">      12660 :         return newClause;</span>
+<span class="lineNum">     331 </span>            :     }
+<span class="lineNum">     332 </span>            : 
+<a name="333"><span class="lineNum">     333 </span>            : }</a>
+<span class="lineNum">     334 </span>            : 
+<span class="lineNum">     335 </span><span class="lineCov">      38905 : unsigned int Solver::computeLBD(Clause* clause) {</span>
+<span class="lineNum">     336 </span><span class="lineCov">      38905 :     lbdTimeStamp++;</span>
+<span class="lineNum">     337 </span><span class="lineCov">      38905 :     unsigned int lbd = 0;</span>
+<span class="lineNum">     338 </span><span class="lineCov">    2332020 :     for (unsigned int i = 0; i &lt; clause-&gt;getSize() &amp;&amp; lbd &lt; SATURNIN_MAX_LBD_VALUE; i++) {</span>
+<span class="lineNum">     339 </span><span class="lineCov">    2293114 :         Var v = VariablesManager::getVar(clause-&gt;getLit(i));</span>
+<span class="lineNum">     340 </span>            :         //compute the lbd
+<span class="lineNum">     341 </span><span class="lineCov">    2293114 :         unsigned int varLvl = varLevel[v];</span>
+<span class="lineNum">     342 </span><span class="lineCov">    2293109 :         if (levelLBDChecked[varLvl] != lbdTimeStamp) {</span>
+<span class="lineNum">     343 </span><span class="lineCov">     777764 :             levelLBDChecked[varLvl] = lbdTimeStamp;</span>
+<span class="lineNum">     344 </span><span class="lineCov">     777765 :             lbd++;</span>
+<span class="lineNum">     345 </span>            :         }
+<span class="lineNum">     346 </span>            :     }
+<span class="lineNum">     347 </span><span class="lineCov">      38907 :     return lbd;</span>
+<a name="348"><span class="lineNum">     348 </span>            : }</a>
+<span class="lineNum">     349 </span>            : 
+<span class="lineNum">     350 </span><span class="lineCov">       4727 : void Solver::removeLearntClause(Clause* c) {</span>
+<span class="lineNum">     351 </span>            : 
+<span class="lineNum">     352 </span><span class="lineCov">       4727 :     nbClauseRemoved++;</span>
+<span class="lineNum">     353 </span><span class="lineCov">       4727 :     ASSERT(c-&gt;isLearnt());</span>
+<span class="lineNum">     354 </span><span class="lineCov">       4727 :     ASSERT(c-&gt;getSize() &gt; 1);</span>
+<span class="lineNum">     355 </span>            : 
+<span class="lineNum">     356 </span>            :     //Remove the clause from the watched structures
+<span class="lineNum">     357 </span><span class="lineCov">       4727 :     if (c-&gt;isAttached()) {</span>
+<span class="lineNum">     358 </span><span class="lineCov">       4654 :         stopWatchClause(c-&gt;getLit(0), c);</span>
+<span class="lineNum">     359 </span><span class="lineCov">       4654 :         stopWatchClause(c-&gt;getLit(1), c);</span>
+<span class="lineNum">     360 </span>            :     }
+<span class="lineNum">     361 </span>            : 
+<span class="lineNum">     362 </span>            : 
+<span class="lineNum">     363 </span>            :     //Remove the clause from the learntClauses list by putting it at the end
+<span class="lineNum">     364 </span>            :     //of the list and then 'popping' it
+<span class="lineNum">     365 </span><span class="lineCov">       4727 :     unsigned int i = c-&gt;getIndex();</span>
+<span class="lineNum">     366 </span><span class="lineCov">       4727 :     ASSERT(learntClauses.getSize() != 0);</span>
+<span class="lineNum">     367 </span><span class="lineCov">       4727 :     unsigned int last = learntClauses.getSize() - 1;</span>
+<span class="lineNum">     368 </span><span class="lineCov">       4727 :     ASSERT(i &lt;= last);</span>
+<span class="lineNum">     369 </span><span class="lineCov">       4727 :     ASSERT(c == learntClauses[i]);</span>
+<span class="lineNum">     370 </span><span class="lineCov">       4727 :     if (i != last) {</span>
+<span class="lineNum">     371 </span><span class="lineCov">       4680 :         Clause* tmp = learntClauses[last];</span>
+<span class="lineNum">     372 </span>            :         //put clause c as last element in the learnt clauses vector
+<span class="lineNum">     373 </span><span class="lineCov">       4680 :         learntClauses[i] = tmp;</span>
+<span class="lineNum">     374 </span><span class="lineCov">       4680 :         tmp-&gt;setIndex(i);</span>
+<span class="lineNum">     375 </span>            : #ifdef DEBUG
+<span class="lineNum">     376 </span><span class="lineCov">       4680 :         learntClauses[last] = c;</span>
+<span class="lineNum">     377 </span>            : #endif /* DEBUG */
+<span class="lineNum">     378 </span>            :     }
+<span class="lineNum">     379 </span><span class="lineCov">       4727 :     ASSERT(c == learntClauses[last]);</span>
+<span class="lineNum">     380 </span><span class="lineCov">       4727 :     learntClauses.pop();</span>
+<span class="lineNum">     381 </span>            : 
+<span class="lineNum">     382 </span><span class="lineCov">       4727 :     ASSERT(lbdValues[c-&gt;getLBD()] &gt; 0);</span>
+<span class="lineNum">     383 </span><span class="lineCov">       4727 :     lbdValues[c-&gt;getLBD()]--;</span>
+<span class="lineNum">     384 </span>            : 
+<span class="lineNum">     385 </span>            :     //Remove the clause from memory
+<span class="lineNum">     386 </span><span class="lineCov">       4727 :     allocator.releaseClause(c);</span>
+<a name="387"><span class="lineNum">     387 </span><span class="lineCov">       4727 : }</span></a>
+<span class="lineNum">     388 </span>            : 
+<span class="lineNum">     389 </span><span class="lineCov">      90298 : void Solver::addWatchedClause(Clause* c) {</span>
+<span class="lineNum">     390 </span><span class="lineCov">      90298 :     Lit a = c-&gt;getLit(0);</span>
+<span class="lineNum">     391 </span><span class="lineCov">      90234 :     Lit b = c-&gt;getLit(1);</span>
+<span class="lineNum">     392 </span><span class="lineCov">      90223 :     watchedClauses[a].push(watcher_t(c, b));</span>
+<span class="lineNum">     393 </span><span class="lineCov">      90301 :     watchedClauses[b].push(watcher_t(c, a));</span>
+<a name="394"><span class="lineNum">     394 </span><span class="lineCov">      90268 : }</span></a>
+<span class="lineNum">     395 </span>            : 
+<span class="lineNum">     396 </span><span class="lineCov">      30026 : void Solver::stopWatchClause(const Lit l, const Clause* c) {</span>
+<span class="lineNum">     397 </span><span class="lineCov">      30026 :     watcher_t* i = (watcher_t*) watchedClauses[l];</span>
+<span class="lineNum">     398 </span><span class="lineCov">      30034 :     watcher_t* end = i + watchedClauses[l].getSize();</span>
+<span class="lineNum">     399 </span><span class="lineCov">     535235 :     while (i != end) {</span>
+<span class="lineNum">     400 </span><span class="lineCov">     505200 :         if (i-&gt;watched == c) {</span>
+<span class="lineNum">     401 </span><span class="lineCov">     536788 :             while (i + 1 != end) {</span>
+<span class="lineNum">     402 </span><span class="lineCov">     476725 :                 *i = *(i + 1);</span>
+<span class="lineNum">     403 </span><span class="lineCov">     476722 :                 i++;</span>
+<span class="lineNum">     404 </span>            :             }
+<span class="lineNum">     405 </span><span class="lineCov">      30030 :             watchedClauses[l].pop();</span>
+<span class="lineNum">     406 </span><span class="lineCov">      60065 :             return;</span>
+<span class="lineNum">     407 </span>            :         }
+<span class="lineNum">     408 </span><span class="lineCov">     475167 :         i++;</span>
+<span class="lineNum">     409 </span>            :     }
+<a name="410"><span class="lineNum">     410 </span>            : }</a>
+<span class="lineNum">     411 </span>            : 
+<span class="lineNum">     412 </span><span class="lineCov">      18776 : bool Solver::reduceClauseEval(const Clause* c, unsigned int medianLBD, int maxToBeUsefull, int&amp; trueLits) {</span>
+<span class="lineNum">     413 </span><span class="lineCov">      18776 :     bool containsProvenLit = c-&gt;getLBD() &gt; medianLBD;</span>
+<span class="lineNum">     414 </span><span class="lineCov">      18776 :     if (c-&gt;getLBD() &gt;= 3) {</span>
+<span class="lineNum">     415 </span><span class="lineCov">     446916 :         for (unsigned int j = 0; j &lt; c-&gt;getSize() &amp;&amp; !containsProvenLit &amp;&amp; trueLits &lt;= maxToBeUsefull; j++) {</span>
+<span class="lineNum">     416 </span><span class="lineCov">     430582 :             Lit l = c-&gt;getLit(j);</span>
+<span class="lineNum">     417 </span><span class="lineCov">     430582 :             Var v = VariablesManager::getVar(l);</span>
+<span class="lineNum">     418 </span>            :             //check if the clause doesn't contain any proven literal
+<span class="lineNum">     419 </span><span class="lineCov">     430582 :             containsProvenLit = assign[v] != wUnknown &amp;&amp;</span>
+<span class="lineNum">     420 </span><span class="lineCov">     430582 :                     assign[v] == (VariablesManager::getLitSign(l) ? wTrue : wFalse);</span>
+<span class="lineNum">     421 </span>            : 
+<span class="lineNum">     422 </span><span class="lineCov">     430582 :             if (phase[v] == (VariablesManager::getLitSign(l) ? wTrue : wFalse)) {</span>
+<span class="lineNum">     423 </span><span class="lineCov">      33813 :                 trueLits++;</span>
+<span class="lineNum">     424 </span>            :             }
+<span class="lineNum">     425 </span>            :         }
+<span class="lineNum">     426 </span>            :     }
+<span class="lineNum">     427 </span><span class="lineCov">      18776 :     return containsProvenLit;</span>
+<a name="428"><span class="lineNum">     428 </span>            : }</a>
+<span class="lineNum">     429 </span>            : 
+<span class="lineNum">     430 </span><span class="lineCov">         11 : void Solver::reduce() {</span>
+<span class="lineNum">     431 </span>            : 
+<span class="lineNum">     432 </span><span class="lineCov">         11 :     SATURNIN_BEGIN_PROFILE;</span>
+<span class="lineNum">     433 </span><span class="lineCov">         11 :     nbReducePerformed++;</span>
+<span class="lineNum">     434 </span>            :     //some values that are used to show som stats
+<span class="lineNum">     435 </span><span class="lineCov">         11 :     double deviation = 0;</span>
+<span class="lineNum">     436 </span><span class="lineCov">         11 :     unsigned int nbClausesCurrentlyUsed = 0;</span>
+<span class="lineNum">     437 </span>            : 
+<span class="lineNum">     438 </span>            : #ifdef DEBUG
+<span class="lineNum">     439 </span><span class="lineCov">         11 :     unsigned int ts = 0;</span>
+<span class="lineNum">     440 </span><span class="lineCov">        387 :     for (unsigned int i = 0; i &lt; lbdValues.getSize(); i++) {</span>
+<span class="lineNum">     441 </span><span class="lineCov">        376 :         ts += lbdValues[i];</span>
+<span class="lineNum">     442 </span>            :     }
+<span class="lineNum">     443 </span><span class="lineCov">         11 :     ASSERT_EQUAL(ts, learntClauses.getSize());</span>
+<span class="lineNum">     444 </span>            : #endif /* DEBUG */
+<span class="lineNum">     445 </span>            : 
+<span class="lineNum">     446 </span><span class="lineCov">         11 :     unsigned int sum = 0;</span>
+<span class="lineNum">     447 </span><span class="lineCov">         11 :     unsigned int medianLBD = 0;</span>
+<span class="lineNum">     448 </span><span class="lineCov">        105 :     while (medianLBD + 1 &lt; lbdValues.getSize() &amp;&amp; sum + lbdValues[medianLBD + 1] &lt; learntClauses.getSize() / 2) {</span>
+<span class="lineNum">     449 </span><span class="lineCov">         83 :         sum += lbdValues[medianLBD];</span>
+<span class="lineNum">     450 </span><span class="lineCov">         83 :         medianLBD++;</span>
+<span class="lineNum">     451 </span>            :     }
+<span class="lineNum">     452 </span><span class="lineCov">         11 :     medianLBD+=2;</span>
+<span class="lineNum">     453 </span>            : 
+<span class="lineNum">     454 </span><span class="lineCov">         11 :     ASSERT_EQUAL(assignLevel, 0U);</span>
+<span class="lineNum">     455 </span><span class="lineCov">         11 :     ASSERT_EQUAL(0U, propagationQueue.getSize());</span>
+<span class="lineNum">     456 </span>            : 
+<span class="lineNum">     457 </span>            :     //compute the hamming distance
+<span class="lineNum">     458 </span><span class="lineCov">         11 :     phaseHammingDistance = 0;</span>
+<span class="lineNum">     459 </span><span class="lineCov">     151525 :     for (unsigned int i = 0; i &lt; phase.getSize(); i++) {</span>
+<span class="lineNum">     460 </span><span class="lineCov">     151514 :         if (phase[i] != previousPhase[i]) {</span>
+<span class="lineNum">     461 </span><span class="lineCov">      27973 :             phaseHammingDistance++;</span>
+<span class="lineNum">     462 </span>            :         }
+<span class="lineNum">     463 </span>            :     }
+<span class="lineNum">     464 </span>            : 
+<span class="lineNum">     465 </span>            :     //Copy the current phase
+<span class="lineNum">     466 </span><span class="lineCov">         11 :     std::memcpy((wbool*) previousPhase, (wbool*) phase, previousPhase.getSize() * sizeof (wbool));</span>
+<span class="lineNum">     467 </span>            : 
+<span class="lineNum">     468 </span>            :     //compute the deviation
+<span class="lineNum">     469 </span><span class="lineCov">         11 :     deviation = (1.0 * phaseHammingDistance) / nbVarSeenBtwReduce;</span>
+<span class="lineNum">     470 </span><span class="lineCov">         11 :     if (deviation &gt; minDeviation) {</span>
+<span class="lineNum">     471 </span><span class="lineCov">          2 :         deviation = minDeviation;</span>
+<span class="lineNum">     472 </span><span class="lineCov">          9 :     } else if (minDeviation &gt; deviation) {</span>
+<span class="lineNum">     473 </span><span class="lineCov">          9 :         minDeviation = deviation;</span>
+<span class="lineNum">     474 </span>            :     }
+<span class="lineNum">     475 </span><span class="lineCov">         11 :     deviation = deviation &lt; 0.01 ? 0.1 : deviation;</span>
+<span class="lineNum">     476 </span>            : 
+<span class="lineNum">     477 </span>            :     //reset the var used to compute the deviation for the next time
+<span class="lineNum">     478 </span><span class="lineCov">         11 :     phaseHammingDistance = 0;</span>
+<span class="lineNum">     479 </span><span class="lineCov">         11 :     nbVarSeenBtwReduce = 0;</span>
+<span class="lineNum">     480 </span>            : 
+<span class="lineNum">     481 </span><span class="lineCov">         11 :     Array&lt;Clause*&gt; toDesactivate;</span>
+<span class="lineNum">     482 </span>            : 
+<span class="lineNum">     483 </span><span class="lineCov">         11 :     unsigned int i = learntClauses.getSize() - 1;</span>
+<span class="lineNum">     484 </span>            : 
+<span class="lineNum">     485 </span><span class="lineCov">      18798 :     while (i &lt; learntClauses.getSize() &amp;&amp; !Solver::asyncStop) {</span>
+<span class="lineNum">     486 </span>            : 
+<span class="lineNum">     487 </span><span class="lineCov">      18776 :         Clause* c = learntClauses[i];</span>
+<span class="lineNum">     488 </span>            : 
+<span class="lineNum">     489 </span><span class="lineCov">      18776 :         if (!c-&gt;isAttached()) {</span>
+<span class="lineNum">     490 </span>            :             //we will deal with those later
+<span class="lineNum">     491 </span><span class="lineCov">       2370 :             i--;</span>
+<span class="lineNum">     492 </span><span class="lineCov">       2370 :             continue;</span>
+<span class="lineNum">     493 </span>            :         }
+<span class="lineNum">     494 </span>            : 
+<span class="lineNum">     495 </span>            :         //compute the maximum number of literals that we allow to be the same
+<span class="lineNum">     496 </span>            :         //polarity as the phase for that clause
+<span class="lineNum">     497 </span>            :         //Thanks to the deviation we know an approximation of many changes
+<span class="lineNum">     498 </span>            :         //we could do to the polarity of the variables. If there are too many
+<span class="lineNum">     499 </span>            :         //changes needed to make the clause falsified, we will freeze it
+<span class="lineNum">     500 </span><span class="lineCov">      16406 :         int maxToBeUsefull = (int) ((c-&gt;getSize() * deviation));</span>
+<span class="lineNum">     501 </span><span class="lineCov">      16406 :         int trueLits = 0;</span>
+<span class="lineNum">     502 </span><span class="lineCov">      16406 :         bool containsProvenLit = reduceClauseEval(c, medianLBD, maxToBeUsefull, trueLits);</span>
+<span class="lineNum">     503 </span>            : 
+<span class="lineNum">     504 </span><span class="lineCov">      16406 :         if (containsProvenLit) {</span>
+<span class="lineNum">     505 </span>            :             //clause is useless
+<span class="lineNum">     506 </span><span class="lineCov">       4654 :             removeLearntClause(c);</span>
+<span class="lineNum">     507 </span><span class="lineCov">      11752 :         } else if (trueLits &gt; maxToBeUsefull) {</span>
+<span class="lineNum">     508 </span>            :             //The clause is &quot;too far&quot; from current interpretation
+<span class="lineNum">     509 </span><span class="lineCov">       3814 :             c-&gt;incrementFreezeCounter();</span>
+<span class="lineNum">     510 </span><span class="lineCov">       3814 :             if (c-&gt;getFreezeCounter() &gt; 7U || c-&gt;getLBD() &gt; medianLBD) {</span>
+<span class="lineNum">     511 </span><span class="lineNoCov">          0 :                 removeLearntClause(c);</span>
+<span class="lineNum">     512 </span>            :             } else /* if (c-&gt;isAttached()) =&gt; always true */ {
+<span class="lineNum">     513 </span><span class="lineCov">       3814 :                 toDesactivate.push(c);</span>
+<span class="lineNum">     514 </span>            :             }
+<span class="lineNum">     515 </span>            :         } else {
+<span class="lineNum">     516 </span>            :             //This clause could be a usefull clause
+<span class="lineNum">     517 </span><span class="lineCov">       7938 :             nbClausesCurrentlyUsed++;</span>
+<span class="lineNum">     518 </span>            :         }
+<span class="lineNum">     519 </span><span class="lineCov">      16406 :         i--;</span>
+<span class="lineNum">     520 </span>            :     }
+<span class="lineNum">     521 </span>            : 
+<span class="lineNum">     522 </span><span class="lineCov">         11 :     unsigned int monowatched = toDesactivate.getSize();</span>
+<span class="lineNum">     523 </span><span class="lineCov">     303039 :     for (unsigned int j = 0; j &lt; monowatch.getSize(); j++) {</span>
+<span class="lineNum">     524 </span><span class="lineCov">     303028 :         watcher_t* current = monowatch[j];</span>
+<span class="lineNum">     525 </span><span class="lineCov">     303028 :         watcher_t* dest = current;</span>
+<span class="lineNum">     526 </span><span class="lineCov">     303028 :         watcher_t* end = current + monowatch[j].getSize();</span>
+<span class="lineNum">     527 </span><span class="lineCov">     608426 :         while (current != end) {</span>
+<span class="lineNum">     528 </span><span class="lineCov">       2370 :             Clause* c = current-&gt;watched;</span>
+<span class="lineNum">     529 </span><span class="lineCov">       2370 :             ASSERT(!c-&gt;isAttached());</span>
+<span class="lineNum">     530 </span><span class="lineCov">       2370 :             int maxToBeUsefull = (int) ((c-&gt;getSize() * deviation));</span>
+<span class="lineNum">     531 </span><span class="lineCov">       2370 :             int trueLits = 0;</span>
+<span class="lineNum">     532 </span><span class="lineCov">       2370 :             bool containsProvenLit = reduceClauseEval(c, medianLBD, maxToBeUsefull, trueLits);</span>
+<span class="lineNum">     533 </span>            : 
+<span class="lineNum">     534 </span><span class="lineCov">       2370 :             if (containsProvenLit) {</span>
+<span class="lineNum">     535 </span><span class="lineCov">         73 :                 removeLearntClause(c);</span>
+<span class="lineNum">     536 </span><span class="lineCov">         73 :                 current++;</span>
+<span class="lineNum">     537 </span><span class="lineCov">       2297 :             } else if (trueLits &gt; maxToBeUsefull) {</span>
+<span class="lineNum">     538 </span><span class="lineCov">       1940 :                 c-&gt;incrementFreezeCounter();</span>
+<span class="lineNum">     539 </span><span class="lineCov">       1940 :                 monowatched++;</span>
+<span class="lineNum">     540 </span><span class="lineCov">       1940 :                 *dest = *current;</span>
+<span class="lineNum">     541 </span><span class="lineCov">       1940 :                 dest++;</span>
+<span class="lineNum">     542 </span><span class="lineCov">       1940 :                 current++;</span>
+<span class="lineNum">     543 </span>            :             } else {
+<span class="lineNum">     544 </span><span class="lineCov">        357 :                 addWatchedClause(c);</span>
+<span class="lineNum">     545 </span><span class="lineCov">        357 :                 c-&gt;setAttached(true);</span>
+<span class="lineNum">     546 </span><span class="lineCov">        357 :                 current++;</span>
+<span class="lineNum">     547 </span>            :             }
+<span class="lineNum">     548 </span>            :         }
+<span class="lineNum">     549 </span><span class="lineCov">     303028 :         monowatch[j].pop(static_cast&lt;unsigned int&gt;(end - dest));</span>
+<span class="lineNum">     550 </span>            :     }
+<span class="lineNum">     551 </span>            : 
+<span class="lineNum">     552 </span>            :     //Deactivate the clause that have to be deactivated
+<span class="lineNum">     553 </span><span class="lineCov">       3836 :     while (toDesactivate.getSize() &gt; 0) {</span>
+<span class="lineNum">     554 </span><span class="lineCov">       3814 :         Clause* c = toDesactivate.getLast();</span>
+<span class="lineNum">     555 </span><span class="lineCov">       3814 :         ASSERT(c-&gt;isAttached());</span>
+<span class="lineNum">     556 </span><span class="lineCov">       3814 :         toDesactivate.pop();</span>
+<span class="lineNum">     557 </span><span class="lineCov">       3814 :         c-&gt;setAttached(false);</span>
+<span class="lineNum">     558 </span><span class="lineCov">       3814 :         stopWatchClause(c-&gt;getLit(0), c);</span>
+<span class="lineNum">     559 </span><span class="lineCov">       3814 :         stopWatchClause(c-&gt;getLit(1), c);</span>
+<span class="lineNum">     560 </span><span class="lineCov">       3814 :         monowatch[c-&gt;getLit(0)].push(watcher_t(c, c-&gt;getLit(1)));</span>
+<span class="lineNum">     561 </span>            :     }
+<span class="lineNum">     562 </span>            : 
+<span class="lineNum">     563 </span><span class="lineCov">         11 :     phasedElimination();</span>
+<span class="lineNum">     564 </span><span class="lineCov">         11 :     allocator.clearup();</span>
+<span class="lineNum">     565 </span>            : 
+<span class="lineNum">     566 </span><span class="lineCov">         11 :     if (verbosity &gt; 0) {</span>
+<span class="lineNum">     567 </span>            :         ::printf(&quot;c %12&quot; PRIu64 &quot; | %10d | %14d\n&quot;,
+<span class="lineNum">     568 </span><span class="lineNoCov">          0 :                 conflicts, learntClauses.getSize(), monowatched);</span>
+<span class="lineNum">     569 </span>            :     }
+<span class="lineNum">     570 </span>            : 
+<span class="lineNum">     571 </span><span class="lineCov">         11 :     SATURNIN_END_PROFILE(__profile_reduce);</span>
+<a name="572"><span class="lineNum">     572 </span><span class="lineCov">         11 : }</span></a>
+<span class="lineNum">     573 </span>            : 
+<span class="lineNum">     574 </span><span class="lineCov">    1006949 : void Solver::updateVSIDS(Var v) {</span>
+<span class="lineNum">     575 </span>            : 
+<span class="lineNum">     576 </span><span class="lineCov">    1006949 :     varActivityValue[v] += vsidsInc;</span>
+<span class="lineNum">     577 </span><span class="lineCov">    1006958 :     if (varActivityValue[v] &gt; 1e100) {</span>
+<span class="lineNum">     578 </span><span class="lineNoCov">          0 :         for (unsigned int i = 0; i &lt; varActivityValue.getSize(); i++) {</span>
+<span class="lineNum">     579 </span><span class="lineNoCov">          0 :             varActivityValue[i] *= 1e-100;</span>
+<span class="lineNum">     580 </span>            :         }
+<span class="lineNum">     581 </span><span class="lineNoCov">          0 :         vsidsInc *= 1e-100;</span>
+<span class="lineNum">     582 </span>            :     }
+<span class="lineNum">     583 </span><span class="lineCov">    1006958 :     if (varActivity.contains(v)) {</span>
+<span class="lineNum">     584 </span><span class="lineCov">     337263 :         varActivity.updateValue(v);</span>
+<span class="lineNum">     585 </span>            :     }
+<a name="586"><span class="lineNum">     586 </span><span class="lineCov">    1006961 : }</span></a>
+<span class="lineNum">     587 </span>            : 
+<span class="lineNum">     588 </span><span class="lineCov">     183693 : bool Solver::addClause(const Array&lt;Lit&gt;&amp; c) {</span>
+<span class="lineNum">     589 </span><span class="lineCov">     183693 :     return addClause((const Lit*) c, c.getSize());</span>
+<a name="590"><span class="lineNum">     590 </span>            : }</a>
+<span class="lineNum">     591 </span>            : 
+<span class="lineNum">     592 </span><span class="lineCov">    1317265 : void Solver::ensureCapacity(Var v, unsigned int nbInitialized) {</span>
+<span class="lineNum">     593 </span><span class="lineCov">    1317265 :     if (nbInitialized &gt; v) {</span>
+<span class="lineNum">     594 </span><span class="lineCov">    2634479 :         return;</span>
+<span class="lineNum">     595 </span>            :     }
+<span class="lineNum">     596 </span>            : 
+<span class="lineNum">     597 </span>            :     RandomGenerator rand(
+<span class="lineNum">     598 </span>            : #ifdef SATURNIN_PARALLEL
+<span class="lineNum">     599 </span>            :     threadId+
+<span class="lineNum">     600 </span>            : #endif /* SATURNIN_PARALLEL */
+<span class="lineNum">     601 </span><span class="lineCov">         51 :     nbInitialized);</span>
+<span class="lineNum">     602 </span><span class="lineCov">         51 :     unsigned int nbVarsToAdd = v + 1 - assign.getSize();</span>
+<span class="lineNum">     603 </span><span class="lineCov">     132818 :     for (unsigned int i = 0; i &lt; nbVarsToAdd; i++) {</span>
+<span class="lineNum">     604 </span><span class="lineCov">     132767 :         map.push(var_Undef);</span>
+<span class="lineNum">     605 </span><span class="lineCov">     132767 :         revertMap.push(var_Undef);</span>
+<span class="lineNum">     606 </span><span class="lineCov">     132767 :         binReasons.push(assign.getSize());</span>
+<span class="lineNum">     607 </span><span class="lineCov">     132767 :         binReasons.push(lit_Undef);</span>
+<span class="lineNum">     608 </span><span class="lineCov">     132767 :         binReasons.push(lit_Undef);</span>
+<span class="lineNum">     609 </span><span class="lineCov">     132767 :         assign.push(wUnknown);</span>
+<span class="lineNum">     610 </span><span class="lineCov">     132767 :         wbool curPhase = wFalse;</span>
+<span class="lineNum">     611 </span>            : #ifdef SATURNIN_PARALLEL
+<span class="lineNum">     612 </span><span class="lineCov">     132767 :         if(threadId != 0 &amp;&amp; (rand.getNext()+threadId)%2 == 0){</span>
+<span class="lineNum">     613 </span><span class="lineNoCov">          0 :             curPhase = wTrue;</span>
+<span class="lineNum">     614 </span>            :         }
+<span class="lineNum">     615 </span>            : #endif /* SATURNIN_PARALLEL */
+<span class="lineNum">     616 </span><span class="lineCov">     132767 :         phase.push(curPhase);</span>
+<span class="lineNum">     617 </span><span class="lineCov">     132767 :         presumption.push(wUnknown);</span>
+<span class="lineNum">     618 </span><span class="lineCov">     132767 :         previousPhase.push(wFalse);</span>
+<span class="lineNum">     619 </span><span class="lineCov">     132767 :         varActivityValue.push(0.0);</span>
+<span class="lineNum">     620 </span><span class="lineCov">     132767 :         varActivity.add(nbInitialized + i);</span>
+<span class="lineNum">     621 </span><span class="lineCov">     132767 :         varLevel.push(0);</span>
+<span class="lineNum">     622 </span><span class="lineCov">     132767 :         levelLBDChecked.push(0);</span>
+<span class="lineNum">     623 </span><span class="lineCov">     132767 :         binWatched.push();</span>
+<span class="lineNum">     624 </span><span class="lineCov">     132767 :         watchedClauses.push();</span>
+<span class="lineNum">     625 </span><span class="lineCov">     132767 :         monowatch.push();</span>
+<span class="lineNum">     626 </span><span class="lineCov">     132767 :         reasons.push((Lit*) nullptr);</span>
+<span class="lineNum">     627 </span><span class="lineCov">     132767 :         seen.push(false);</span>
+<span class="lineNum">     628 </span><span class="lineCov">     132767 :         lastReduceSeen.push((unsigned int) - 1);</span>
+<span class="lineNum">     629 </span><span class="lineCov">     132767 :         pureLitSearch.push(0);</span>
+<span class="lineNum">     630 </span>            :     }
+<span class="lineNum">     631 </span><span class="lineCov">     132818 :     for (unsigned int i = 0; i &lt; nbVarsToAdd; i++) {</span>
+<span class="lineNum">     632 </span><span class="lineCov">     132767 :         binWatched.push();</span>
+<span class="lineNum">     633 </span><span class="lineCov">     132767 :         watchedClauses.push();</span>
+<span class="lineNum">     634 </span><span class="lineCov">     132767 :         monowatch.push();</span>
+<span class="lineNum">     635 </span><span class="lineCov">     132767 :         pureLitSearch.push(0);</span>
+<span class="lineNum">     636 </span>            :     }
+<span class="lineNum">     637 </span><span class="lineCov">         51 :     nbVar = assign.getSize();</span>
+<a name="638"><span class="lineNum">     638 </span>            : }</a>
+<span class="lineNum">     639 </span>            : 
+<span class="lineNum">     640 </span><span class="lineCov">    4251470 : Lit* Solver::binaryPropagate(const Lit l) {</span>
+<span class="lineNum">     641 </span><span class="lineCov">    4251470 :     SATURNIN_BEGIN_PROFILE;</span>
+<span class="lineNum">     642 </span><span class="lineCov">    4251344 :     Lit* conflict = nullptr;</span>
+<span class="lineNum">     643 </span><span class="lineCov">    8898074 :     for (unsigned int i = 0; i &lt; binWatched[l].getSize(); i++) {</span>
+<span class="lineNum">     644 </span><span class="lineCov">    4647113 :         Lit other = binWatched[l][i];</span>
+<span class="lineNum">     645 </span><span class="lineCov">    4646961 :         Var vother = VariablesManager::getVar(other);</span>
+<span class="lineNum">     646 </span><span class="lineCov">    4647109 :         if (assign[vother] != wUnknown) {</span>
+<span class="lineNum">     647 </span><span class="lineCov">    2213575 :             if (assign[vother] == (VariablesManager::getLitSign(other) ? wTrue : wFalse)) {</span>
+<span class="lineNum">     648 </span><span class="lineCov">    2209062 :                 continue;</span>
+<span class="lineNum">     649 </span>            :             } else {
+<span class="lineNum">     650 </span>            :                 //conflict found, we have to return the clause other \/ l
+<span class="lineNum">     651 </span>            :                 //however, there is already a clause for vother
+<span class="lineNum">     652 </span>            :                 //therefore, we need an extra space
+<span class="lineNum">     653 </span><span class="lineCov">       4589 :                 binConflict[0] = other;</span>
+<span class="lineNum">     654 </span><span class="lineCov">       4589 :                 binConflict[1] = l;</span>
+<span class="lineNum">     655 </span><span class="lineCov">       4589 :                 binConflict[2] = lit_Undef;</span>
+<span class="lineNum">     656 </span><span class="lineCov">       4589 :                 conflict = binConflict;</span>
+<span class="lineNum">     657 </span><span class="lineCov">       4589 :                 i = binWatched[l].getSize();</span>
+<span class="lineNum">     658 </span>            :             }
+<span class="lineNum">     659 </span>            :         } else {
+<span class="lineNum">     660 </span><span class="lineCov">    2433722 :             binReasons[3 * vother] = other;</span>
+<span class="lineNum">     661 </span><span class="lineCov">    2433691 :             binReasons[3 * vother + 1] = l;</span>
+<span class="lineNum">     662 </span><span class="lineCov">    2433713 :             ASSERT_EQUAL(lit_Undef, binReasons[3 * vother + 2]);</span>
+<span class="lineNum">     663 </span><span class="lineCov">    2433759 :             enqueue(other, ((Lit*) binReasons) + 3 * vother);</span>
+<span class="lineNum">     664 </span>            :         }
+<span class="lineNum">     665 </span>            :     }
+<span class="lineNum">     666 </span><span class="lineCov">    4251142 :     SATURNIN_END_PROFILE(__profile_propagateBin);</span>
+<span class="lineNum">     667 </span><span class="lineCov">    4251267 :     return conflict;</span>
+<a name="668"><span class="lineNum">     668 </span>            : }</a>
+<span class="lineNum">     669 </span>            : 
+<span class="lineNum">     670 </span><span class="lineCov">     188031 : Lit* Solver::propagate() {</span>
+<span class="lineNum">     671 </span><span class="lineCov">     188031 :     Lit* conflict = nullptr;</span>
+<span class="lineNum">     672 </span><span class="lineCov">    4627497 :     while (propagationQueue.getSize() &gt; 0 &amp;&amp; conflict == nullptr) {</span>
+<span class="lineNum">     673 </span><span class="lineCov">    4251507 :         nbPropag++;</span>
+<span class="lineNum">     674 </span><span class="lineCov">    4251507 :         const Lit l = propagationQueue.getFirst();</span>
+<span class="lineNum">     675 </span><span class="lineCov">    4250960 :         propagationQueue.pop();</span>
+<span class="lineNum">     676 </span>            : 
+<span class="lineNum">     677 </span>            :         //first, let's propagate binary clauses
+<span class="lineNum">     678 </span><span class="lineCov">    4251552 :         conflict = binaryPropagate(l);</span>
+<span class="lineNum">     679 </span>            : 
+<span class="lineNum">     680 </span><span class="lineCov">    4251406 :         if (conflict == nullptr) {</span>
+<span class="lineNum">     681 </span><span class="lineCov">    4246885 :             conflict = propagateWatchedBy(l);</span>
+<span class="lineNum">     682 </span>            :         }
+<span class="lineNum">     683 </span>            : 
+<span class="lineNum">     684 </span><span class="lineCov">    4251454 :         if (conflict == nullptr) {</span>
+<span class="lineNum">     685 </span><span class="lineCov">    4238812 :             conflict = propagateMonoWatched(l);</span>
+<span class="lineNum">     686 </span>            :         }
+<span class="lineNum">     687 </span>            : 
+<span class="lineNum">     688 </span>            :     }
+<span class="lineNum">     689 </span>            : 
+<span class="lineNum">     690 </span>            : #ifdef DEBUG
+<span class="lineNum">     691 </span>            : 
+<span class="lineNum">     692 </span>            :     //verify that the conflicting clause is unsatisfied
+<span class="lineNum">     693 </span><span class="lineCov">     188040 :     if (conflict != nullptr) {</span>
+<span class="lineNum">     694 </span><span class="lineCov">     145354 :         for (unsigned int i = 0; conflict[i] != lit_Undef; i++) {</span>
+<span class="lineNum">     695 </span><span class="lineCov">     132431 :             Lit l = conflict[i];</span>
+<span class="lineNum">     696 </span><span class="lineCov">     132431 :             Var v = VariablesManager::getVar(l);</span>
+<span class="lineNum">     697 </span><span class="lineCov">     132433 :             ASSERT(assign[v] != wUnknown);</span>
+<span class="lineNum">     698 </span><span class="lineCov">     132433 :             ASSERT(assign[v] != (VariablesManager::getLitSign(l) ? wTrue : wFalse));</span>
+<span class="lineNum">     699 </span>            :         }
+<span class="lineNum">     700 </span>            :     }
+<span class="lineNum">     701 </span>            : 
+<span class="lineNum">     702 </span>            : #endif /* DEBUG */
+<span class="lineNum">     703 </span>            : 
+<span class="lineNum">     704 </span><span class="lineCov">     188041 :     if (conflict != nullptr) {</span>
+<span class="lineNum">     705 </span>            :         //TODO: change this with an make empty procedure
+<span class="lineNum">     706 </span><span class="lineCov">     306432 :         while (propagationQueue.getSize() &gt; 0) {</span>
+<span class="lineNum">     707 </span><span class="lineCov">     280585 :             propagationQueue.pop();</span>
+<span class="lineNum">     708 </span>            :         }
+<span class="lineNum">     709 </span>            :     }
+<span class="lineNum">     710 </span>            : 
+<span class="lineNum">     711 </span><span class="lineCov">     188042 :     return conflict;</span>
+<a name="712"><span class="lineNum">     712 </span>            : }</a>
+<span class="lineNum">     713 </span>            : 
+<span class="lineNum">     714 </span><span class="lineCov">    4238821 : Lit* Solver::propagateMonoWatched(const Lit l) {</span>
+<span class="lineNum">     715 </span><span class="lineCov">    4238821 :     SATURNIN_BEGIN_PROFILE;</span>
+<span class="lineNum">     716 </span><span class="lineCov">    4238772 :     Lit* conflict = nullptr;</span>
+<span class="lineNum">     717 </span><span class="lineCov">    8515711 :     while (conflict == nullptr &amp;&amp; monowatch[l].getSize() &gt; 0) {</span>
+<span class="lineNum">     718 </span>            : 
+<span class="lineNum">     719 </span><span class="lineCov">      38166 :         watcher_t nextMonoClause = monowatch[l].getLast();</span>
+<span class="lineNum">     720 </span><span class="lineCov">      38167 :         monowatch[l].pop();</span>
+<span class="lineNum">     721 </span><span class="lineCov">      38167 :         ASSERT(nextMonoClause.watched-&gt;contains(l));</span>
+<span class="lineNum">     722 </span><span class="lineCov">      38167 :         ASSERT(nextMonoClause.watched-&gt;contains(nextMonoClause.block));</span>
+<span class="lineNum">     723 </span>            : 
+<span class="lineNum">     724 </span><span class="lineCov">      38166 :         Var vblock = VariablesManager::getVar(nextMonoClause.block);</span>
+<span class="lineNum">     725 </span><span class="lineCov">      38166 :         if (assign[vblock] == wUnknown || assign[vblock] == (VariablesManager::getLitSign(nextMonoClause.block) ? wTrue : wFalse)) {</span>
+<span class="lineNum">     726 </span><span class="lineCov">      27452 :             monowatch[nextMonoClause.block].push(watcher_t(nextMonoClause.watched, l));</span>
+<span class="lineNum">     727 </span><span class="lineCov">      27453 :             continue;</span>
+<span class="lineNum">     728 </span>            :         }
+<span class="lineNum">     729 </span>            : 
+<span class="lineNum">     730 </span><span class="lineCov">      10714 :         Clause* cur = nextMonoClause.watched;</span>
+<span class="lineNum">     731 </span><span class="lineCov">      10714 :         ASSERT(!cur-&gt;isAttached())</span>
+<span class="lineNum">     732 </span>            :         //look for a new watch
+<span class="lineNum">     733 </span><span class="lineCov">      10714 :         Lit* candidate = cur-&gt;lits();</span>
+<span class="lineNum">     734 </span><span class="lineCov">      10714 :         Var v = VariablesManager::getVar(*candidate);</span>
+<span class="lineNum">     735 </span>            : 
+<span class="lineNum">     736 </span>            : 
+<span class="lineNum">     737 </span>            :         //p is the position of l
+<span class="lineNum">     738 </span><span class="lineCov">      10714 :         unsigned int p = std::numeric_limits&lt;unsigned int&gt;::max();</span>
+<span class="lineNum">     739 </span><span class="lineCov">      10714 :         bool found = false;</span>
+<span class="lineNum">     740 </span><span class="lineCov">      55859 :         while (!found &amp;&amp; *candidate != lit_Undef) {</span>
+<span class="lineNum">     741 </span><span class="lineCov">      34431 :             if (*candidate == l) {</span>
+<span class="lineNum">     742 </span><span class="lineCov">       7404 :                 p = static_cast&lt;unsigned int&gt;(candidate - cur-&gt;lits());</span>
+<span class="lineNum">     743 </span>            :             }
+<span class="lineNum">     744 </span><span class="lineCov">      34431 :             found = assign[v] == wUnknown || assign[v] == (VariablesManager::getLitSign(*candidate) ? wTrue : wFalse);</span>
+<span class="lineNum">     745 </span><span class="lineCov">      34431 :             if (!found) {</span>
+<span class="lineNum">     746 </span><span class="lineCov">      23923 :                 candidate++;</span>
+<span class="lineNum">     747 </span><span class="lineCov">      23923 :                 v = VariablesManager::getVar(*candidate);</span>
+<span class="lineNum">     748 </span>            :             }
+<span class="lineNum">     749 </span>            :         }
+<span class="lineNum">     750 </span><span class="lineCov">      10714 :         if (!found) {</span>
+<span class="lineNum">     751 </span>            :             //no new watch has been found. Therefore, a conflict appear
+<span class="lineNum">     752 </span><span class="lineCov">        206 :             conflict = cur-&gt;lits();</span>
+<span class="lineNum">     753 </span>            : 
+<span class="lineNum">     754 </span><span class="lineCov">        206 :             ASSERT(*candidate == lit_Undef);</span>
+<span class="lineNum">     755 </span><span class="lineCov">        206 :             ASSERT(p &lt; std::numeric_limits&lt;unsigned int&gt;::max());</span>
+<span class="lineNum">     756 </span><span class="lineCov">        206 :             ASSERT_EQUAL(l, cur-&gt;getLit(p));</span>
+<span class="lineNum">     757 </span>            : 
+<span class="lineNum">     758 </span>            :             //remove the clause from the monowatch and put it back to the
+<span class="lineNum">     759 </span>            :             //'normal' data-structures
+<span class="lineNum">     760 </span><span class="lineCov">        206 :             cur-&gt;swapLiterals(p, 1);</span>
+<span class="lineNum">     761 </span><span class="lineCov">        206 :             cur-&gt;setAttached(true);</span>
+<span class="lineNum">     762 </span><span class="lineCov">        206 :             addWatchedClause(cur);</span>
+<span class="lineNum">     763 </span>            : 
+<span class="lineNum">     764 </span>            : #ifdef DEBUG
+<span class="lineNum">     765 </span><span class="lineCov">        335 :             for (unsigned int k = 0; k &lt; monowatch[l].getSize(); k++) {</span>
+<span class="lineNum">     766 </span><span class="lineCov">        129 :                 ASSERT(!monowatch[l][k].watched-&gt;isAttached());</span>
+<span class="lineNum">     767 </span>            :             }
+<span class="lineNum">     768 </span>            : #endif /* DEBUG */
+<span class="lineNum">     769 </span>            : 
+<span class="lineNum">     770 </span>            :         } else {
+<span class="lineNum">     771 </span><span class="lineCov">      10508 :             ASSERT_EQUAL(VariablesManager::getVar(*candidate), v);</span>
+<span class="lineNum">     772 </span><span class="lineCov">      10508 :             ASSERT(cur-&gt;contains(*candidate));</span>
+<span class="lineNum">     773 </span>            :             //we have found another watch
+<span class="lineNum">     774 </span>            :             //change the watching literal by the one set to true
+<span class="lineNum">     775 </span><span class="lineCov">      10508 :             ASSERT(*candidate != l);</span>
+<span class="lineNum">     776 </span><span class="lineCov">      10508 :             monowatch[*candidate].push(watcher_t(cur, l));</span>
+<span class="lineNum">     777 </span>            :         }
+<span class="lineNum">     778 </span>            :     }
+<span class="lineNum">     779 </span><span class="lineCov">    4238718 :     if (conflict == nullptr) {</span>
+<span class="lineNum">     780 </span><span class="lineCov">    4238512 :         monowatch[l].pop(monowatch[l].getSize());</span>
+<span class="lineNum">     781 </span>            :     } else {
+<span class="lineNum">     782 </span><span class="lineCov">        206 :         ASSERT_EQUAL(l, *(conflict + 1));</span>
+<span class="lineNum">     783 </span>            :     }
+<span class="lineNum">     784 </span><span class="lineCov">    4238797 :     SATURNIN_END_PROFILE(__profile_propagateMono);</span>
+<span class="lineNum">     785 </span><span class="lineCov">    4238436 :     return conflict;</span>
+<a name="786"><span class="lineNum">     786 </span>            : }</a>
+<span class="lineNum">     787 </span>            : 
+<span class="lineNum">     788 </span><span class="lineCov">    4246843 : Lit* Solver::propagateWatchedBy(const Lit l) {</span>
+<span class="lineNum">     789 </span><span class="lineCov">    4246843 :     SATURNIN_BEGIN_PROFILE;</span>
+<span class="lineNum">     790 </span><span class="lineCov">    4246765 :     Lit* conflict = nullptr;</span>
+<span class="lineNum">     791 </span>            :     //The pointer to the previous clause
+<span class="lineNum">     792 </span><span class="lineCov">    4246765 :     watcher_t* currentWatch = (watcher_t*) watchedClauses[l];</span>
+<span class="lineNum">     793 </span><span class="lineCov">    4246911 :     watcher_t* end = currentWatch + watchedClauses[l].getSize();</span>
+<span class="lineNum">     794 </span><span class="lineCov">    4246948 :     watcher_t* destCopy = currentWatch;</span>
+<span class="lineNum">     795 </span>            : 
+<span class="lineNum">     796 </span><span class="lineCov">    4246948 :     long int nbskip = 0;</span>
+<span class="lineNum">     797 </span><span class="lineCov">   19064345 :     while (currentWatch != end &amp;&amp; conflict == nullptr) {</span>
+<span class="lineNum">     798 </span><span class="lineCov">   10570125 :         bool foundNewWatch = false;</span>
+<span class="lineNum">     799 </span>            : 
+<span class="lineNum">     800 </span><span class="lineCov">   10570125 :         ASSERT(currentWatch-&gt;watched-&gt;getLit(0) == l || currentWatch-&gt;watched-&gt;getLit(1) == l);</span>
+<span class="lineNum">     801 </span>            : 
+<span class="lineNum">     802 </span>            :         //check if the other literal hasn't been proven true at this
+<span class="lineNum">     803 </span>            :         //level
+<span class="lineNum">     804 </span><span class="lineCov">   10568471 :         Lit block = currentWatch-&gt;block;</span>
+<span class="lineNum">     805 </span><span class="lineCov">   10568471 :         Var vBlock = VariablesManager::getVar(block);</span>
+<span class="lineNum">     806 </span>            : 
+<span class="lineNum">     807 </span><span class="lineCov">   17280418 :         if (assign[vBlock] != wUnknown &amp;&amp;</span>
+<span class="lineNum">     808 </span><span class="lineCov">    6710742 :                 assign[vBlock] == (VariablesManager::getLitSign(block) ? wTrue : wFalse)) {</span>
+<span class="lineNum">     809 </span>            :             //ASSERT(varLevel[vBlock] &lt;= assignLevel);
+<span class="lineNum">     810 </span>            :             //go to next clause
+<span class="lineNum">     811 </span><span class="lineCov">    5777014 :             *destCopy = *currentWatch;</span>
+<span class="lineNum">     812 </span><span class="lineCov">    5777115 :             currentWatch++;</span>
+<span class="lineNum">     813 </span><span class="lineCov">    5777115 :             destCopy++;</span>
+<span class="lineNum">     814 </span><span class="lineCov">    5777115 :             continue;</span>
+<span class="lineNum">     815 </span>            :         }
+<span class="lineNum">     816 </span>            : 
+<span class="lineNum">     817 </span><span class="lineCov">    4792576 :         Clause* cur = currentWatch-&gt;watched;</span>
+<span class="lineNum">     818 </span>            : 
+<span class="lineNum">     819 </span>            :         //make sure that l is at position 1
+<span class="lineNum">     820 </span>            :         //That way, if the other watched literal is set to true, we have
+<span class="lineNum">     821 </span>            :         //the true literal at position 0
+<span class="lineNum">     822 </span>            :         //This fact is used in analyze
+<span class="lineNum">     823 </span><span class="lineCov">    4792576 :         if (cur-&gt;getLit(1) != l) {</span>
+<span class="lineNum">     824 </span><span class="lineCov">    1514895 :             cur-&gt;swapLiterals(0, 1);</span>
+<span class="lineNum">     825 </span>            :         }
+<span class="lineNum">     826 </span><span class="lineCov">    4793581 :         ASSERT_EQUAL(l, cur-&gt;getLit(1));</span>
+<span class="lineNum">     827 </span>            : 
+<span class="lineNum">     828 </span>            :         //update the blocker
+<span class="lineNum">     829 </span><span class="lineCov">    4792917 :         currentWatch-&gt;block = cur-&gt;getLit(0);</span>
+<span class="lineNum">     830 </span>            : 
+<span class="lineNum">     831 </span>            : #ifdef DEBUG
+<span class="lineNum">     832 </span><span class="lineCov">    4793462 :         Clause* next = currentWatch + 1 == end ? nullptr : (currentWatch + 1)-&gt;watched;</span>
+<span class="lineNum">     833 </span><span class="lineCov">    4793462 :         ASSERT(next == nullptr || (next-&gt;getLit(0) == l || next-&gt;getLit(1) == l));</span>
+<span class="lineNum">     834 </span>            : #endif /* DEBUG */
+<span class="lineNum">     835 </span>            : 
+<span class="lineNum">     836 </span><span class="lineCov">    4793312 :         Lit first = cur-&gt;getLit(0);</span>
+<span class="lineNum">     837 </span><span class="lineCov">    4793513 :         Var vFirst = VariablesManager::getVar(first);</span>
+<span class="lineNum">     838 </span><span class="lineCov">    5562631 :         if (assign[vFirst] != wUnknown &amp;&amp;</span>
+<span class="lineNum">     839 </span><span class="lineCov">     769403 :                 assign[vFirst] == (VariablesManager::getLitSign(first) ? wTrue : wFalse)) {</span>
+<span class="lineNum">     840 </span><span class="lineCov">     568367 :             *destCopy = *currentWatch;</span>
+<span class="lineNum">     841 </span><span class="lineCov">     568383 :             currentWatch++;</span>
+<span class="lineNum">     842 </span><span class="lineCov">     568383 :             destCopy++;</span>
+<span class="lineNum">     843 </span><span class="lineCov">     568383 :             continue;</span>
+<span class="lineNum">     844 </span>            :         }
+<span class="lineNum">     845 </span>            : 
+<span class="lineNum">     846 </span>            :         //look for a new watch
+<span class="lineNum">     847 </span><span class="lineCov">    4225114 :         unsigned int pos = 2;</span>
+<span class="lineNum">     848 </span><span class="lineCov">   57741337 :         for (; !foundNewWatch &amp;&amp; pos &lt; cur-&gt;getSize(); pos++) {</span>
+<span class="lineNum">     849 </span><span class="lineCov">   53516495 :             Lit currentLit = cur-&gt;getLit(pos);</span>
+<span class="lineNum">     850 </span><span class="lineCov">   53516578 :             Var currentVar = VariablesManager::getVar(currentLit);</span>
+<span class="lineNum">     851 </span>            :             //currentLit is our next watch if the literal is true or
+<span class="lineNum">     852 </span>            :             //if no value has yet been assigned to currentVar
+<span class="lineNum">     853 </span><span class="lineCov">  105518471 :             foundNewWatch = assign[currentVar] == wUnknown ||</span>
+<span class="lineNum">     854 </span>            :                     (//assignLevel &gt;= varLevel[currentVar] &amp;&amp;  &lt;= not needed as otherwise it would be assign[currentVar] == wUnknown
+<span class="lineNum">     855 </span><span class="lineCov">  105517068 :                     assign[currentVar] == (VariablesManager::getLitSign(currentLit) ? wTrue : wFalse));</span>
+<span class="lineNum">     856 </span>            :         }
+<span class="lineNum">     857 </span>            : 
+<span class="lineNum">     858 </span><span class="lineCov">    4225170 :         if (foundNewWatch) {</span>
+<span class="lineNum">     859 </span>            :             //We found a new watcher
+<span class="lineNum">     860 </span>            : 
+<span class="lineNum">     861 </span><span class="lineCov">    2314773 :             Lit lTmp = cur-&gt;getLit(pos - 1);</span>
+<span class="lineNum">     862 </span><span class="lineCov">    2314756 :             ASSERT(assign[VariablesManager::getVar(lTmp)] == wUnknown ||</span>
+<span class="lineNum">     863 </span>            :                     assign[VariablesManager::getVar(lTmp)] == (VariablesManager::getLitSign(lTmp) ? wTrue : wFalse));
+<span class="lineNum">     864 </span><span class="lineCov">    2314638 :             cur-&gt;swapLiterals(1, pos - 1);</span>
+<span class="lineNum">     865 </span>            : 
+<span class="lineNum">     866 </span>            :             //Remove the current clause from the list of l
+<span class="lineNum">     867 </span><span class="lineCov">    2314775 :             currentWatch++;</span>
+<span class="lineNum">     868 </span><span class="lineCov">    2314775 :             nbskip++;</span>
+<span class="lineNum">     869 </span>            : 
+<span class="lineNum">     870 </span>            :             //Add the clause to the watched list of the literal of lTmp
+<span class="lineNum">     871 </span><span class="lineCov">    2314775 :             ASSERT(cur-&gt;getLit(1) == lTmp);</span>
+<span class="lineNum">     872 </span><span class="lineCov">    2314678 :             ASSERT(lTmp != l);</span>
+<span class="lineNum">     873 </span><span class="lineCov">    2314609 :             watchedClauses[lTmp].push(watcher_t(cur, cur-&gt;getLit(0)));</span>
+<span class="lineNum">     874 </span>            :         } else {
+<span class="lineNum">     875 </span>            :             //We didn't found any other watch, we must enqueue another
+<span class="lineNum">     876 </span>            :             //or we may have found a conflict
+<span class="lineNum">     877 </span><span class="lineCov">    1910397 :             Lit secondLit = cur-&gt;getLit(0);</span>
+<span class="lineNum">     878 </span><span class="lineCov">    1910572 :             Var secondVar = VariablesManager::getVar(secondLit);</span>
+<span class="lineNum">     879 </span><span class="lineCov">    1918649 :             if (assign[secondVar] != wUnknown &amp;&amp;</span>
+<span class="lineNum">     880 </span><span class="lineCov">       8128 :                     assign[secondVar] != (VariablesManager::getLitSign(secondLit) ? wTrue : wFalse)) {</span>
+<span class="lineNum">     881 </span><span class="lineCov">       8128 :                 ASSERT(varLevel[secondVar] &lt;= assignLevel);</span>
+<span class="lineNum">     882 </span>            :                 //we found a conflict!
+<span class="lineNum">     883 </span><span class="lineCov">       8128 :                 conflict = cur-&gt;lits();</span>
+<span class="lineNum">     884 </span>            : 
+<span class="lineNum">     885 </span>            :                 //copy the remaining watches
+<span class="lineNum">     886 </span><span class="lineCov">       8127 :                 memmove(destCopy, currentWatch, (end - currentWatch) * sizeof (watcher_t));</span>
+<span class="lineNum">     887 </span>            : 
+<span class="lineNum">     888 </span>            :             } else{ 
+<span class="lineNum">     889 </span><span class="lineCov">    1902024 :                 ASSERT(assign[secondVar] == wUnknown);</span>
+<span class="lineNum">     890 </span><span class="lineCov">    1902171 :                 enqueue(secondLit, cur-&gt;lits());</span>
+<span class="lineNum">     891 </span>            : 
+<span class="lineNum">     892 </span>            :                 //we may re-compute the lbd value of the clause
+<span class="lineNum">     893 </span><span class="lineCov">    1901859 :                 if (cur-&gt;getLBD() &gt; 3) {</span>
+<span class="lineNum">     894 </span><span class="lineCov">      22992 :                     unsigned int lbd = computeLBD(cur);</span>
+<span class="lineNum">     895 </span><span class="lineCov">      22992 :                     ASSERT(lbd &lt; cur-&gt;getSize());</span>
+<span class="lineNum">     896 </span><span class="lineCov">      22992 :                     if (lbd &lt; cur-&gt;getLBD()) {</span>
+<span class="lineNum">     897 </span><span class="lineCov">       6059 :                         ASSERT(lbdValues[cur-&gt;getLBD()] &gt; 0);</span>
+<span class="lineNum">     898 </span><span class="lineCov">       6059 :                         lbdValues[cur-&gt;getLBD()]--;</span>
+<span class="lineNum">     899 </span><span class="lineCov">       6059 :                         cur-&gt;setLBD(lbd);</span>
+<span class="lineNum">     900 </span><span class="lineCov">       6059 :                         ASSERT(lbd != 0);</span>
+<span class="lineNum">     901 </span><span class="lineCov">      12118 :                         while (lbd &gt;= lbdValues.getSize()) {</span>
+<span class="lineNum">     902 </span><span class="lineNoCov">          0 :                             lbdValues.push(0);</span>
+<span class="lineNum">     903 </span>            :                         }
+<span class="lineNum">     904 </span><span class="lineCov">       6059 :                         lbdValues[lbd]++;</span>
+<span class="lineNum">     905 </span>            :                     }
+<span class="lineNum">     906 </span>            :                 }
+<span class="lineNum">     907 </span>            : 
+<span class="lineNum">     908 </span><span class="lineCov">    1901987 :                 *destCopy = *currentWatch;</span>
+<span class="lineNum">     909 </span><span class="lineCov">    1902110 :                 destCopy++;</span>
+<span class="lineNum">     910 </span><span class="lineCov">    1902110 :                 currentWatch++;</span>
+<span class="lineNum">     911 </span>            :             }
+<span class="lineNum">     912 </span>            :         }
+<span class="lineNum">     913 </span>            :     }
+<span class="lineNum">     914 </span><span class="lineCov">    4247272 :     ASSERT(nbskip == end - destCopy || conflict != nullptr);</span>
+<span class="lineNum">     915 </span>            : 
+<span class="lineNum">     916 </span><span class="lineCov">    4246715 :     watchedClauses[l].pop(nbskip);</span>
+<span class="lineNum">     917 </span><span class="lineCov">    4246844 :     SATURNIN_END_PROFILE(__profile_propagateWatched);</span>
+<span class="lineNum">     918 </span><span class="lineCov">    4246937 :     return conflict;</span>
+<a name="919"><span class="lineNum">     919 </span>            : }</a>
+<span class="lineNum">     920 </span>            : 
+<span class="lineNum">     921 </span><span class="lineCov">     668244 : bool Solver::litRedundant(Lit p, unsigned int abstract_levels, Array&lt;Lit&gt;&amp; analyze_toclear) {</span>
+<span class="lineNum">     922 </span><span class="lineCov">     668244 :     Array&lt;Lit&gt; analyze_stack;</span>
+<span class="lineNum">     923 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">     924 </span><span class="lineCov">    1336486 :     Array&lt;Lit*&gt; resolvedClauses;</span>
+<span class="lineNum">     925 </span>            : #endif /* SATURNIN_DB */
+<span class="lineNum">     926 </span><span class="lineCov">     668245 :     analyze_stack.push(p);</span>
+<span class="lineNum">     927 </span><span class="lineCov">     668246 :     int top = analyze_toclear.getSize();</span>
+<span class="lineNum">     928 </span><span class="lineCov">   13014275 :     while (analyze_stack.getSize() &gt; 0) {</span>
+<span class="lineNum">     929 </span><span class="lineCov">   12309864 :         ASSERT(reasons[VariablesManager::getVar(analyze_stack.get(analyze_stack.getSize() - 1))] != nullptr);</span>
+<span class="lineNum">     930 </span><span class="lineCov">   12309863 :         Lit* c = reasons.get(VariablesManager::getVar(analyze_stack.get(analyze_stack.getSize() - 1)));</span>
+<span class="lineNum">     931 </span><span class="lineCov">   12309863 :         analyze_stack.pop();</span>
+<span class="lineNum">     932 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">     933 </span><span class="lineCov">   12309865 :         resolvedClauses.push(c);</span>
+<span class="lineNum">     934 </span>            : #endif /* SATURNIN_DB */
+<span class="lineNum">     935 </span><span class="lineCov">   26808503 :         for (unsigned int i = 1; c[i] != lit_Undef; i++) {</span>
+<span class="lineNum">     936 </span><span class="lineCov">   15130720 :             Lit l = c[i];</span>
+<span class="lineNum">     937 </span><span class="lineCov">   15130720 :             Var v = VariablesManager::getVar(l);</span>
+<span class="lineNum">     938 </span><span class="lineCov">   15130724 :             if (!seen[v] &amp;&amp; varLevel.get(v) &gt; 0) {</span>
+<span class="lineNum">     939 </span><span class="lineCov">   25660391 :                 if (reasons[v] != nullptr &amp;&amp;</span>
+<span class="lineNum">     940 </span><span class="lineCov">   12534547 :                         (abstractLevel(v) &amp; abstract_levels) != 0) {</span>
+<span class="lineNum">     941 </span><span class="lineCov">   12493767 :                     seen[v] = 1;</span>
+<span class="lineNum">     942 </span><span class="lineCov">   12493773 :                     analyze_stack.push(l);</span>
+<span class="lineNum">     943 </span><span class="lineCov">   12493773 :                     analyze_toclear.push(l);</span>
+<span class="lineNum">     944 </span>            :                 } else {
+<span class="lineNum">     945 </span><span class="lineCov">   13093436 :                     for (unsigned int j = top; j &lt; analyze_toclear.getSize(); j++) {</span>
+<span class="lineNum">     946 </span><span class="lineCov">   12461356 :                         seen[VariablesManager::getVar(analyze_toclear[j])] = 0;</span>
+<span class="lineNum">     947 </span>            :                     }
+<span class="lineNum">     948 </span><span class="lineCov">     632080 :                     analyze_toclear.pop(analyze_toclear.getSize() - top);</span>
+<span class="lineNum">     949 </span><span class="lineCov">     632080 :                     return false;</span>
+<span class="lineNum">     950 </span>            :                 }
+<span class="lineNum">     951 </span>            :             }
+<span class="lineNum">     952 </span>            :         }
+<span class="lineNum">     953 </span>            :     }
+<span class="lineNum">     954 </span>            :     
+<span class="lineNum">     955 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">     956 </span><span class="lineCov">     104747 :     for(const auto *clause : resolvedClauses) {</span>
+<span class="lineNum">     957 </span><span class="lineCov">      68584 :         db.addResolution(clause, db.nbClausesAdded());</span>
+<span class="lineNum">     958 </span>            :     }
+<span class="lineNum">     959 </span>            : #endif /* SATURNIN_DB */
+<span class="lineNum">     960 </span><span class="lineCov">     704409 :     return true;</span>
+<a name="961"><span class="lineNum">     961 </span>            : }</a>
+<span class="lineNum">     962 </span>            : 
+<span class="lineNum">     963 </span><span class="lineCov">      12913 : void Solver::computeLearntClause(Lit* conflictingClause, Array&lt;Lit&gt;&amp; learnt){</span>
+<span class="lineNum">     964 </span>            : #ifdef DEBUG
+<span class="lineNum">     965 </span><span class="lineCov">      12913 :     unsigned int nbVarThisLvl = 0;</span>
+<span class="lineNum">     966 </span><span class="lineCov">     145335 :     for(unsigned int i = 0; conflictingClause[i]!=lit_Undef; i++){</span>
+<span class="lineNum">     967 </span><span class="lineCov">     132417 :         ASSERT(assign[VariablesManager::getVar(conflictingClause[i])] != wUnknown);</span>
+<span class="lineNum">     968 </span><span class="lineCov">     132422 :         ASSERT(getLitValue(conflictingClause[i]) == wFalse);</span>
+<span class="lineNum">     969 </span><span class="lineCov">     132422 :         if(varLevel[VariablesManager::getVar(conflictingClause[i])] == assignLevel){</span>
+<span class="lineNum">     970 </span><span class="lineCov">      34370 :             nbVarThisLvl++;</span>
+<span class="lineNum">     971 </span>            :         }
+<span class="lineNum">     972 </span>            :     }
+<span class="lineNum">     973 </span><span class="lineCov">      12918 :     ASSERT(nbVarThisLvl &gt; 0);</span>
+<span class="lineNum">     974 </span>            : #endif /* DEBUG */
+<span class="lineNum">     975 </span><span class="lineCov">      12916 :     int nbElementToCheck = 0;</span>
+<span class="lineNum">     976 </span><span class="lineCov">      12916 :     Lit p = 0;</span>
+<span class="lineNum">     977 </span>            : 
+<span class="lineNum">     978 </span>            :     // Generate conflict clause:s
+<span class="lineNum">     979 </span><span class="lineCov">      12916 :     learnt.push(p); // (leave room for the asserting literal)</span>
+<span class="lineNum">     980 </span><span class="lineCov">      12918 :     ASSERT(stack.getSize() &gt; 0);</span>
+<span class="lineNum">     981 </span><span class="lineCov">      12916 :     unsigned int index = stack.getSize() - 1;</span>
+<span class="lineNum">     982 </span>            : 
+<span class="lineNum">     983 </span>            : #ifdef DEBUG
+<span class="lineNum">     984 </span><span class="lineCov">      12917 :     ASSERT_EQUAL(nbVar, seen.getSize());</span>
+<span class="lineNum">     985 </span><span class="lineCov">  370550885 :     for (unsigned int i = 0; i &lt; nbVar; i++) {</span>
+<span class="lineNum">     986 </span><span class="lineCov">  370537967 :         ASSERT_EQUAL(false, seen[i])</span>
+<span class="lineNum">     987 </span>            :     }
+<span class="lineNum">     988 </span>            : #endif
+<span class="lineNum">     989 </span>            : 
+<span class="lineNum">     990 </span>            :     //used to simplify the clause
+<span class="lineNum">     991 </span><span class="lineCov">      12918 :     unsigned int abstract_level = 0;</span>
+<span class="lineNum">     992 </span><span class="lineCov">      12918 :     Array&lt;Lit&gt; toclear;</span>
+<span class="lineNum">     993 </span>            : 
+<span class="lineNum">     994 </span>            : 
+<span class="lineNum">     995 </span><span class="lineCov">      12918 :     Lit* c = conflictingClause;</span>
+<span class="lineNum">     996 </span><span class="lineCov">     286562 :     do {</span>
+<span class="lineNum">     997 </span>            : 
+<span class="lineNum">     998 </span><span class="lineCov">     286562 :         ASSERT(c != nullptr);</span>
+<span class="lineNum">     999 </span><span class="lineCov">     286560 :         ASSERT(c == conflictingClause || p == c[0]);</span>
+<span class="lineNum">    1000 </span>            :         
+<span class="lineNum">    1001 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">    1002 </span><span class="lineCov">     286561 :         db.addResolution(c, db.nbClausesAdded());</span>
+<span class="lineNum">    1003 </span>            : #endif /* SATURNIN_DB */
+<span class="lineNum">    1004 </span>            :         
+<span class="lineNum">    1005 </span>            :         //The first time we are going through this loop, we have to go through
+<span class="lineNum">    1006 </span>            :         //each literal.
+<span class="lineNum">    1007 </span>            :         //after that, we know that we have already been through the first literal
+<span class="lineNum">    1008 </span>            :         //as it lead to analyzing that new clause. Therefore, we don't need to
+<span class="lineNum">    1009 </span>            :         //analyze for it again
+<span class="lineNum">    1010 </span><span class="lineCov">    4775362 :         for (unsigned int j = (c == conflictingClause) ? 0 : 1;</span>
+<span class="lineNum">    1011 </span><span class="lineCov">    2387681 :                 c[j] != lit_Undef; j++) {</span>
+<span class="lineNum">    1012 </span><span class="lineCov">    2101125 :             Lit l = c[j];</span>
+<span class="lineNum">    1013 </span><span class="lineCov">    2101125 :             Var v = VariablesManager::getVar(l);</span>
+<span class="lineNum">    1014 </span>            : 
+<span class="lineNum">    1015 </span>            :             //As the clause c was used as a reason, every var used in the clause
+<span class="lineNum">    1016 </span>            :             //should have been assigned
+<span class="lineNum">    1017 </span><span class="lineCov">    2101130 :             ASSERT(assign[v] != wUnknown);</span>
+<span class="lineNum">    1018 </span>            : 
+<span class="lineNum">    1019 </span><span class="lineCov">    2101133 :             if (!seen[v] &amp;&amp; varLevel[v] &gt; 0) {</span>
+<span class="lineNum">    1020 </span><span class="lineCov">    1006949 :                 updateVSIDS(v);</span>
+<span class="lineNum">    1021 </span><span class="lineCov">    1006955 :                 seen[v] = true;</span>
+<span class="lineNum">    1022 </span><span class="lineCov">    1006958 :                 if (varLevel[v] &gt;= assignLevel) {</span>
+<span class="lineNum">    1023 </span><span class="lineCov">     286553 :                     nbElementToCheck++;</span>
+<span class="lineNum">    1024 </span>            :                 } else {
+<span class="lineNum">    1025 </span><span class="lineCov">     720398 :                     learnt.push(l);</span>
+<span class="lineNum">    1026 </span>            : 
+<span class="lineNum">    1027 </span>            :                     //maintain an abstraction of levels involved in conflict
+<span class="lineNum">    1028 </span>            :                     //used for the simplification of the clause
+<span class="lineNum">    1029 </span><span class="lineCov">     720400 :                     abstract_level |= abstractLevel(v);</span>
+<span class="lineNum">    1030 </span>            :                     //remember that we have to clear the value of seen for this
+<span class="lineNum">    1031 </span>            :                     //literal
+<span class="lineNum">    1032 </span><span class="lineCov">     720400 :                     toclear.push(l);</span>
+<span class="lineNum">    1033 </span>            :                 }
+<span class="lineNum">    1034 </span>            :             }
+<span class="lineNum">    1035 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">    1036 </span><span class="lineCov">    1094177 :             else if(varLevel[v] == 0){</span>
+<span class="lineNum">    1037 </span>            :                 //the variable has been proved
+<span class="lineNum">    1038 </span><span class="lineCov">        125 :                 Lit unary[] = {l, lit_Undef};</span>
+<span class="lineNum">    1039 </span><span class="lineCov">        125 :                 db.addResolution(unary, db.nbClausesAdded());</span>
+<span class="lineNum">    1040 </span>            :             }
+<span class="lineNum">    1041 </span>            : #endif /* SATURNIN_DB*/
+<span class="lineNum">    1042 </span>            :         }
+<span class="lineNum">    1043 </span>            : 
+<span class="lineNum">    1044 </span>            : 
+<span class="lineNum">    1045 </span>            :         // Select next clause to look at
+<span class="lineNum">    1046 </span><span class="lineCov">    2814543 :         while (</span>
+<span class="lineNum">    1047 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">    1048 </span><span class="lineCov">    5055967 :                 index &lt; stack.getSize() &amp;&amp;</span>
+<span class="lineNum">    1049 </span>            : #endif /* SATURNIN_DB */
+<span class="lineNum">    1050 </span><span class="lineCov">    2527959 :                 !seen[VariablesManager::getVar(stack[index])]) {</span>
+<span class="lineNum">    1051 </span><span class="lineCov">    2241425 :             index--;</span>
+<span class="lineNum">    1052 </span>            :         }
+<span class="lineNum">    1053 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">    1054 </span><span class="lineCov">     286562 :         if(index &lt; stack.getSize()){</span>
+<span class="lineNum">    1055 </span>            : #endif /* SATURNIN_DB */
+<span class="lineNum">    1056 </span><span class="lineCov">     286559 :             p = stack[index];</span>
+<span class="lineNum">    1057 </span><span class="lineCov">     286557 :             index--;</span>
+<span class="lineNum">    1058 </span>            : 
+<span class="lineNum">    1059 </span><span class="lineCov">     286557 :             c = reasons[VariablesManager::getVar(p)];</span>
+<span class="lineNum">    1060 </span>            : 
+<span class="lineNum">    1061 </span>            :             //make sure that the literal that we will use to analyze the next
+<span class="lineNum">    1062 </span>            :             //clause is at position 0 in that new clause
+<span class="lineNum">    1063 </span><span class="lineCov">     286559 :             ASSERT_EQUAL(VariablesManager::getVar(p),</span>
+<span class="lineNum">    1064 </span>            :                     (c == nullptr ? VariablesManager::getVar(p) : VariablesManager::getVar(c[0])));
+<span class="lineNum">    1065 </span><span class="lineCov">     286559 :             toclear.push(p);</span>
+<span class="lineNum">    1066 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">    1067 </span>            :         } else {
+<span class="lineNum">    1068 </span><span class="lineCov">          3 :             c = nullptr;</span>
+<span class="lineNum">    1069 </span>            :         }
+<span class="lineNum">    1070 </span>            : #endif /* SATURNIN_DB */
+<span class="lineNum">    1071 </span><span class="lineCov">     286562 :         nbElementToCheck--;</span>
+<span class="lineNum">    1072 </span>            : 
+<span class="lineNum">    1073 </span>            :     } while (nbElementToCheck &gt; 0);
+<span class="lineNum">    1074 </span><span class="lineCov">      12918 :     learnt[0U] = VariablesManager::oppositeLit(p);</span>
+<span class="lineNum">    1075 </span>            : 
+<span class="lineNum">    1076 </span>            : #ifdef DEBUG
+<span class="lineNum">    1077 </span>            : 
+<span class="lineNum">    1078 </span>            :     //Check that the first literal is from the highest level, and is the only
+<span class="lineNum">    1079 </span>            :     //one from that level
+<span class="lineNum">    1080 </span><span class="lineCov">     733316 :     for (unsigned int i = 1; i &lt; learnt.getSize(); i++) {</span>
+<span class="lineNum">    1081 </span><span class="lineCov">     720398 :         ASSERT(varLevel[VariablesManager::getVar(learnt.get(i))] &lt;</span>
+<span class="lineNum">    1082 </span>            :                 varLevel[VariablesManager::getVar(learnt.get(0))]);
+<span class="lineNum">    1083 </span>            :     }
+<span class="lineNum">    1084 </span>            : 
+<span class="lineNum">    1085 </span>            : #endif /* DEBUG */
+<span class="lineNum">    1086 </span>            : 
+<span class="lineNum">    1087 </span>            : 
+<span class="lineNum">    1088 </span>            :     //simplify the learnt clause
+<span class="lineNum">    1089 </span><span class="lineCov">      12918 :     unsigned int i = 1;</span>
+<span class="lineNum">    1090 </span><span class="lineCov">      12918 :     unsigned int j = 1;</span>
+<span class="lineNum">    1091 </span><span class="lineCov">     733316 :     for (; i &lt; learnt.getSize(); i++) {</span>
+<span class="lineNum">    1092 </span><span class="lineCov">    1388642 :         if (reasons[VariablesManager::getVar(learnt[i])] == nullptr ||</span>
+<span class="lineNum">    1093 </span><span class="lineCov">     668244 :                 !litRedundant(learnt[i], abstract_level, toclear)) {</span>
+<span class="lineNum">    1094 </span><span class="lineCov">     684233 :             learnt[j] = learnt[i];</span>
+<span class="lineNum">    1095 </span><span class="lineCov">     684233 :             j++;</span>
+<span class="lineNum">    1096 </span>            :         }
+<span class="lineNum">    1097 </span>            :     }
+<span class="lineNum">    1098 </span><span class="lineCov">      12918 :     ASSERT(j &lt;= i);</span>
+<span class="lineNum">    1099 </span>            :     //remove the useless literals
+<span class="lineNum">    1100 </span><span class="lineCov">      12918 :     learnt.pop(i - j);</span>
+<span class="lineNum">    1101 </span>            : 
+<span class="lineNum">    1102 </span>            : 
+<span class="lineNum">    1103 </span>            :     //clear the seen array
+<span class="lineNum">    1104 </span><span class="lineCov">    1052295 :     for (unsigned int k = 0; k &lt; toclear.getSize(); k++) {</span>
+<span class="lineNum">    1105 </span><span class="lineCov">    1039376 :         seen[VariablesManager::getVar(toclear.get(k))] = false;</span>
+<span class="lineNum">    1106 </span><span class="lineCov">      12918 :     }</span>
+<a name="1107"><span class="lineNum">    1107 </span><span class="lineCov">      12918 : }</span></a>
+<span class="lineNum">    1108 </span>            : 
+<span class="lineNum">    1109 </span><span class="lineCov">      12913 : unsigned int Solver::analyze(Lit* conflictingClause, Array&lt;Lit&gt;&amp; learnt) {</span>
+<span class="lineNum">    1110 </span><span class="lineCov">      12913 :     SATURNIN_BEGIN_PROFILE;</span>
+<span class="lineNum">    1111 </span><span class="lineCov">      12914 :     computeLearntClause(conflictingClause, learnt);</span>
+<span class="lineNum">    1112 </span>            : 
+<span class="lineNum">    1113 </span>            :     //Now, we need to look up for the highest level of the different assignment
+<span class="lineNum">    1114 </span>            :     //levels of the literals learnt[1] to learnt[size-1]
+<span class="lineNum">    1115 </span>            :     //This will provide the level on which we have to backtrack
+<span class="lineNum">    1116 </span>            :     unsigned int destinationLevel;
+<span class="lineNum">    1117 </span>            : 
+<span class="lineNum">    1118 </span><span class="lineCov">      12915 :     if (learnt.getSize() == 1) {</span>
+<span class="lineNum">    1119 </span>            :         //hurray! we found a fact, let's make a backtrack up to level 0
+<span class="lineNum">    1120 </span>            :         //this mean that we do a restart, without leaving the search function
+<span class="lineNum">    1121 </span><span class="lineCov">         21 :         destinationLevel = 0;</span>
+<span class="lineNum">    1122 </span>            :     } else {
+<span class="lineNum">    1123 </span><span class="lineCov">      12894 :         unsigned int pos = 1;</span>
+<span class="lineNum">    1124 </span><span class="lineCov">      12894 :         unsigned int maxV = varLevel[VariablesManager::getVar(learnt[pos])];</span>
+<span class="lineNum">    1125 </span><span class="lineCov">     684234 :         for (unsigned int k = 2; k &lt; learnt.getSize(); k++) {</span>
+<span class="lineNum">    1126 </span><span class="lineCov">     671339 :             if (varLevel[VariablesManager::getVar(learnt[k])] &gt; maxV) {</span>
+<span class="lineNum">    1127 </span><span class="lineCov">      92903 :                 maxV = varLevel[VariablesManager::getVar(learnt[k])];</span>
+<span class="lineNum">    1128 </span><span class="lineCov">      92904 :                 pos = k;</span>
+<span class="lineNum">    1129 </span>            :             }
+<span class="lineNum">    1130 </span>            :         }
+<span class="lineNum">    1131 </span><span class="lineCov">      12894 :         destinationLevel = maxV;</span>
+<span class="lineNum">    1132 </span>            :         //make sure that the literal of level maxV is at position 1
+<span class="lineNum">    1133 </span>            :         //that way, it will be one of the watched literals
+<span class="lineNum">    1134 </span><span class="lineCov">      12894 :         Lit ltmp = learnt[pos];</span>
+<span class="lineNum">    1135 </span><span class="lineCov">      12894 :         learnt[pos] = learnt[1U];</span>
+<span class="lineNum">    1136 </span><span class="lineCov">      12894 :         learnt[1U] = ltmp;</span>
+<span class="lineNum">    1137 </span>            :     }
+<span class="lineNum">    1138 </span>            : 
+<span class="lineNum">    1139 </span>            : #ifdef DEBUG
+<span class="lineNum">    1140 </span>            :     //check that the created clause is well entirely false at the current
+<span class="lineNum">    1141 </span>            :     //assignation level
+<span class="lineNum">    1142 </span><span class="lineCov">     710063 :     for (unsigned int k = 0; k &lt; learnt.getSize(); k++) {</span>
+<span class="lineNum">    1143 </span><span class="lineCov">     697149 :         ASSERT(assign[VariablesManager::getVar(learnt[k])] != wUnknown);</span>
+<span class="lineNum">    1144 </span><span class="lineCov">     697149 :         ASSERT(assign[VariablesManager::getVar(learnt[k])] !=</span>
+<span class="lineNum">    1145 </span>            :                 (VariablesManager::getLitSign(learnt[k]) ? wTrue : wFalse));
+<span class="lineNum">    1146 </span>            :     }
+<span class="lineNum">    1147 </span>            : 
+<span class="lineNum">    1148 </span><span class="lineCov">  370551596 :     for (unsigned int k = 0; k &lt; nbVar; k++) {</span>
+<span class="lineNum">    1149 </span><span class="lineCov">  370538681 :         ASSERT_EQUAL(false, seen[k])</span>
+<span class="lineNum">    1150 </span>            :     }
+<span class="lineNum">    1151 </span>            : 
+<span class="lineNum">    1152 </span>            : #endif
+<span class="lineNum">    1153 </span>            : 
+<span class="lineNum">    1154 </span><span class="lineCov">      12915 :     SATURNIN_END_PROFILE(__profile_analyze);</span>
+<span class="lineNum">    1155 </span>            : 
+<span class="lineNum">    1156 </span><span class="lineCov">      12915 :     ASSERT(assignLevel &gt;= destinationLevel);</span>
+<span class="lineNum">    1157 </span><span class="lineCov">      12914 :     return assignLevel - destinationLevel;</span>
+<span class="lineNum">    1158 </span>            : 
+<a name="1159"><span class="lineNum">    1159 </span>            : }</a>
+<span class="lineNum">    1160 </span>            : 
+<span class="lineNum">    1161 </span><span class="lineCov">        104 : wbool Solver::simplify() {</span>
+<span class="lineNum">    1162 </span><span class="lineCov">        104 :     SATURNIN_BEGIN_PROFILE;</span>
+<span class="lineNum">    1163 </span><span class="lineCov">        105 :     ASSERT_EQUAL((unsigned int) 0, assignLevel);</span>
+<span class="lineNum">    1164 </span><span class="lineCov">        132 :     bool stopSimplification = state != wUnknown;</span>
+<span class="lineNum">    1165 </span><span class="lineCov">        132 :     unsigned int nbRemoved = 0U;</span>
+<span class="lineNum">    1166 </span><span class="lineCov">        132 :     unsigned int nbReduced = 0U;</span>
+<span class="lineNum">    1167 </span><span class="lineCov">        339 :     while (!stopSimplification &amp;&amp; !asyncStop) {</span>
+<span class="lineNum">    1168 </span><span class="lineCov">        102 :         stopSimplification = true;</span>
+<span class="lineNum">    1169 </span><span class="lineCov">        102 :         unsigned int i = 0;</span>
+<span class="lineNum">    1170 </span><span class="lineCov">    1154365 :         while (i &lt; clauses.getSize() &amp;&amp; !asyncStop) {</span>
+<span class="lineNum">    1171 </span><span class="lineCov">    1154174 :             Clause* c = clauses[i];</span>
+<span class="lineNum">    1172 </span><span class="lineCov">    1155493 :             bool removed = false;</span>
+<span class="lineNum">    1173 </span><span class="lineCov">    1155493 :             unsigned int j = 0;</span>
+<span class="lineNum">    1174 </span><span class="lineCov">    1155493 :             bool simpl = false;</span>
+<span class="lineNum">    1175 </span><span class="lineCov">    7745528 :             while (!removed &amp;&amp; !simpl &amp;&amp; j &lt; c-&gt;getSize()) {</span>
+<span class="lineNum">    1176 </span><span class="lineCov">    5435276 :                 Lit aLit = c-&gt;getLit(j);</span>
+<span class="lineNum">    1177 </span><span class="lineCov">    5434788 :                 if (assign[VariablesManager::getVar(aLit)] != wUnknown) {</span>
+<span class="lineNum">    1178 </span><span class="lineCov">       5336 :                     wbool v = getLitValue(aLit);</span>
+<span class="lineNum">    1179 </span><span class="lineCov">       5335 :                     ASSERT(v != wUnknown);</span>
+<span class="lineNum">    1180 </span><span class="lineCov">       5334 :                     if (v == wTrue) {</span>
+<span class="lineNum">    1181 </span>            :                         //The clause contains a literal proven true, we may remove
+<span class="lineNum">    1182 </span>            :                         //the clause from our learnt clause database
+<span class="lineNum">    1183 </span><span class="lineCov">       2011 :                         ASSERT(c == clauses[i]);</span>
+<span class="lineNum">    1184 </span><span class="lineCov">       2011 :                         clauses[i] = clauses[clauses.getSize() - 1];</span>
+<span class="lineNum">    1185 </span><span class="lineCov">       2012 :                         clauses.pop();</span>
+<span class="lineNum">    1186 </span><span class="lineCov">       2012 :                         stopWatchClause(c-&gt;getLit(0), c);</span>
+<span class="lineNum">    1187 </span><span class="lineCov">       2012 :                         stopWatchClause(c-&gt;getLit(1), c);</span>
+<span class="lineNum">    1188 </span><span class="lineCov">       2011 :                         allocator.releaseClause(c);</span>
+<span class="lineNum">    1189 </span><span class="lineCov">       2008 :                         removed = true;</span>
+<span class="lineNum">    1190 </span><span class="lineCov">       2008 :                         nbRemoved++;</span>
+<span class="lineNum">    1191 </span>            :                     } else {
+<span class="lineNum">    1192 </span>            :                         //The clause contains a literal proven false, we may
+<span class="lineNum">    1193 </span>            :                         //simplify the clause
+<span class="lineNum">    1194 </span><span class="lineCov">       3323 :                         ASSERT(c == clauses[i]);</span>
+<span class="lineNum">    1195 </span><span class="lineCov">       3325 :                         stopWatchClause(c-&gt;getLit(0), c);</span>
+<span class="lineNum">    1196 </span><span class="lineCov">       3323 :                         stopWatchClause(c-&gt;getLit(1), c);</span>
+<span class="lineNum">    1197 </span><span class="lineCov">       3325 :                         if (!addClause(c-&gt;lits(), c-&gt;getSize(), true)) {</span>
+<span class="lineNum">    1198 </span><span class="lineNoCov">          0 :                             state = wFalse;</span>
+<span class="lineNum">    1199 </span>            :                         }
+<span class="lineNum">    1200 </span><span class="lineCov">       3325 :                         clauses[i] = clauses[clauses.getSize() - 1];</span>
+<span class="lineNum">    1201 </span><span class="lineCov">       3325 :                         clauses.pop();</span>
+<span class="lineNum">    1202 </span><span class="lineCov">       3324 :                         allocator.releaseClause(c);</span>
+<span class="lineNum">    1203 </span><span class="lineCov">       3305 :                         simpl = true;</span>
+<span class="lineNum">    1204 </span><span class="lineCov">       3305 :                         nbReduced++;</span>
+<span class="lineNum">    1205 </span><span class="lineCov">       3305 :                         j++;</span>
+<span class="lineNum">    1206 </span>            :                     }
+<span class="lineNum">    1207 </span>            :                 } else {
+<span class="lineNum">    1208 </span><span class="lineCov">    5429229 :                     j++;</span>
+<span class="lineNum">    1209 </span>            :                 }
+<span class="lineNum">    1210 </span>            :             }
+<span class="lineNum">    1211 </span><span class="lineCov">    1154161 :             if (!removed) {</span>
+<span class="lineNum">    1212 </span><span class="lineCov">    1152141 :                 i++;</span>
+<span class="lineNum">    1213 </span>            :             }
+<span class="lineNum">    1214 </span>            :         }
+<span class="lineNum">    1215 </span>            :     }
+<span class="lineNum">    1216 </span><span class="lineCov">        105 :     nbInitialClausesRemoved += nbRemoved;</span>
+<span class="lineNum">    1217 </span><span class="lineCov">        105 :     nbInitialClausesReduced += nbReduced;</span>
+<span class="lineNum">    1218 </span>            : 
+<span class="lineNum">    1219 </span><span class="lineCov">        105 :     if (state == wUnknown &amp;&amp; getNbClauses() == 0) {</span>
+<span class="lineNum">    1220 </span><span class="lineCov">          1 :         state = wTrue;</span>
+<span class="lineNum">    1221 </span>            :     }
+<span class="lineNum">    1222 </span><span class="lineCov">        105 :     SATURNIN_END_PROFILE(__profile_simplify);</span>
+<span class="lineNum">    1223 </span><span class="lineCov">        104 :     return state;</span>
+<a name="1224"><span class="lineNum">    1224 </span>            : }</a>
+<span class="lineNum">    1225 </span>            : 
+<span class="lineNum">    1226 </span><span class="lineCov">         35 : wbool Solver::phasedElimination() {</span>
+<span class="lineNum">    1227 </span>            : 
+<span class="lineNum">    1228 </span><span class="lineCov">         35 :     ASSERT_EQUAL(0U, assignLevel);</span>
+<span class="lineNum">    1229 </span><span class="lineCov">         36 :     ASSERT_EQUAL(2 * nbVar, pureLitSearch.getSize());</span>
+<span class="lineNum">    1230 </span><span class="lineCov">         35 :     ASSERT_EQUAL(0U, propagationQueue.getSize());</span>
+<span class="lineNum">    1231 </span>            : 
+<span class="lineNum">    1232 </span><span class="lineCov">         35 :     if (state == wUnknown) {</span>
+<span class="lineNum">    1233 </span><span class="lineCov">         36 :         nbPureLitSearch++;</span>
+<span class="lineNum">    1234 </span>            : 
+<span class="lineNum">    1235 </span>            :         //check which literals are used by the clauses of the initial problem
+<span class="lineNum">    1236 </span><span class="lineCov">     235618 :         for (unsigned int i = 0; i &lt; clauses.getSize(); i++) {</span>
+<span class="lineNum">    1237 </span><span class="lineCov">     235661 :             Clause* c = clauses[i];</span>
+<span class="lineNum">    1238 </span><span class="lineCov">    1442296 :             for (unsigned j = 0; j &lt; c-&gt;getSize(); j++) {</span>
+<span class="lineNum">    1239 </span><span class="lineCov">    1207966 :                 Lit l = c-&gt;getLit(j);</span>
+<span class="lineNum">    1240 </span><span class="lineCov">    1205646 :                 pureLitSearch[l] = nbPureLitSearch;</span>
+<span class="lineNum">    1241 </span>            :             }
+<span class="lineNum">    1242 </span>            :         }
+<span class="lineNum">    1243 </span>            :         //check which literals are used by binary clauses
+<span class="lineNum">    1244 </span><span class="lineCov">     563561 :         for (unsigned int i = 0; i &lt; binWatched.getSize(); i++) {</span>
+<span class="lineNum">    1245 </span>            :             //we don't need to go through the elements of binWatched[i] since
+<span class="lineNum">    1246 </span>            :             //for each element x in binWatched[i], binWatched[x] contains
+<span class="lineNum">    1247 </span>            :             //i
+<span class="lineNum">    1248 </span><span class="lineCov">     563793 :             if (binWatched[i].getSize() != 0) {</span>
+<span class="lineNum">    1249 </span><span class="lineCov">     177195 :                 pureLitSearch[i] = nbPureLitSearch;</span>
+<span class="lineNum">    1250 </span>            :             }
+<span class="lineNum">    1251 </span>            :         }
+<span class="lineNum">    1252 </span>            :         //check which literals are used by the learnt clauses
+<span class="lineNum">    1253 </span><span class="lineCov">      14085 :         for (unsigned int i = 0; i &lt; learntClauses.getSize(); i++) {</span>
+<span class="lineNum">    1254 </span><span class="lineCov">      14049 :             Clause* c = learntClauses[i];</span>
+<span class="lineNum">    1255 </span><span class="lineCov">     472664 :             for (unsigned j = 0; j &lt; c-&gt;getSize(); j++) {</span>
+<span class="lineNum">    1256 </span><span class="lineCov">     458615 :                 Lit l = c-&gt;getLit(j);</span>
+<span class="lineNum">    1257 </span><span class="lineCov">     458615 :                 pureLitSearch[l] = nbPureLitSearch;</span>
+<span class="lineNum">    1258 </span>            :             }
+<span class="lineNum">    1259 </span>            :         }
+<span class="lineNum">    1260 </span>            : 
+<span class="lineNum">    1261 </span><span class="lineCov">         72 :         unsigned int nbFound = 0;</span>
+<span class="lineNum">    1262 </span>            : 
+<span class="lineNum">    1263 </span><span class="lineCov">     282022 :         for (unsigned int i = 0; i &lt; nbVar; i++) {</span>
+<span class="lineNum">    1264 </span><span class="lineCov">     281986 :             if (assign[i] == wUnknown) {</span>
+<span class="lineNum">    1265 </span><span class="lineCov">     272043 :                 int flagT = pureLitSearch[VariablesManager::getLit(i, true)];</span>
+<span class="lineNum">    1266 </span><span class="lineCov">     271994 :                 int flagF = pureLitSearch[VariablesManager::getLit(i, false)];</span>
+<span class="lineNum">    1267 </span><span class="lineCov">     272033 :                 if (flagT != nbPureLitSearch &amp;&amp; flagF == nbPureLitSearch) {</span>
+<span class="lineNum">    1268 </span><span class="lineCov">       2239 :                     nbFound++;</span>
+<span class="lineNum">    1269 </span>            :                     //l is not used but ¬l is
+<span class="lineNum">    1270 </span><span class="lineCov">       2239 :                     enqueue(VariablesManager::getLit(i, false));</span>
+<span class="lineNum">    1271 </span><span class="lineCov">     269794 :                 } else if (flagF != nbPureLitSearch &amp;&amp; flagT == nbPureLitSearch) {</span>
+<span class="lineNum">    1272 </span>            :                     //¬l is not used but l is
+<span class="lineNum">    1273 </span><span class="lineCov">       5581 :                     nbFound++;</span>
+<span class="lineNum">    1274 </span><span class="lineCov">       5581 :                     enqueue(VariablesManager::getLit(i, true));</span>
+<span class="lineNum">    1275 </span>            :                 }
+<span class="lineNum">    1276 </span>            :             }
+<span class="lineNum">    1277 </span>            :         }
+<span class="lineNum">    1278 </span>            : 
+<span class="lineNum">    1279 </span><span class="lineCov">         36 :         nbPureLitFound += nbFound;</span>
+<span class="lineNum">    1280 </span>            : 
+<span class="lineNum">    1281 </span>            : #ifdef DEBUG
+<span class="lineNum">    1282 </span>            :         Lit* b =
+<span class="lineNum">    1283 </span>            : #endif /* DEBUG */
+<span class="lineNum">    1284 </span><span class="lineCov">         36 :                 propagate();</span>
+<span class="lineNum">    1285 </span>            : #ifdef DEBUG
+<span class="lineNum">    1286 </span><span class="lineCov">         36 :         ASSERT(b == nullptr);</span>
+<span class="lineNum">    1287 </span>            : #endif
+<span class="lineNum">    1288 </span>            : 
+<span class="lineNum">    1289 </span>            : 
+<span class="lineNum">    1290 </span>            :     }
+<span class="lineNum">    1291 </span>            : 
+<span class="lineNum">    1292 </span>            : 
+<span class="lineNum">    1293 </span><span class="lineCov">         36 :     return state;</span>
+<span class="lineNum">    1294 </span>            : 
+<a name="1295"><span class="lineNum">    1295 </span>            : }</a>
+<span class="lineNum">    1296 </span>            : 
+<span class="lineNum">    1297 </span><span class="lineCov">         22 : bool Solver::solve(unsigned int maxNbRestarts) {</span>
+<span class="lineNum">    1298 </span><span class="lineCov">         22 :     state = simplify();</span>
+<span class="lineNum">    1299 </span><span class="lineCov">         22 :     state = phasedElimination();</span>
+<span class="lineNum">    1300 </span><span class="lineCov">        146 :     while (state == wUnknown &amp;&amp; restarts &lt;= maxNbRestarts &amp;&amp; !asyncStop) {</span>
+<span class="lineNum">    1301 </span><span class="lineCov">        100 :         restarts++;</span>
+<span class="lineNum">    1302 </span><span class="lineCov">        100 :         ASSERT_EQUAL((unsigned int) 0, assignLevel);</span>
+<span class="lineNum">    1303 </span><span class="lineCov">         99 :         state = search(vvalue * factor);</span>
+<span class="lineNum">    1304 </span>            :         //compute the next uvalue and vvalue
+<span class="lineNum">    1305 </span><span class="lineCov">        100 :         if ((uvalue &amp; -uvalue) == vvalue) {</span>
+<span class="lineNum">    1306 </span><span class="lineCov">         62 :             uvalue = uvalue + 1;</span>
+<span class="lineNum">    1307 </span><span class="lineCov">         62 :             vvalue = 1;</span>
+<span class="lineNum">    1308 </span>            :         } else {
+<span class="lineNum">    1309 </span><span class="lineCov">         38 :             vvalue = vvalue * 2;</span>
+<span class="lineNum">    1310 </span>            :         }
+<span class="lineNum">    1311 </span><span class="lineCov">        100 :         if (state == wUnknown &amp;&amp; restarts &lt;= maxNbRestarts &amp;&amp; assignLevel &gt; 0) {</span>
+<span class="lineNum">    1312 </span><span class="lineCov">         79 :             backtrack(assignLevel);</span>
+<span class="lineNum">    1313 </span><span class="lineCov">         79 :             ASSERT_EQUAL(0U, assignLevel);</span>
+<span class="lineNum">    1314 </span><span class="lineCov">         79 :             if (propagationQueue.getSize() &gt; 0) {</span>
+<span class="lineNum">    1315 </span><span class="lineCov">         79 :                 propagationQueue.pop();</span>
+<span class="lineNum">    1316 </span>            :             }
+<span class="lineNum">    1317 </span>            : #ifdef SATURNIN_PARALLEL
+<span class="lineNum">    1318 </span>            :             //import the clauses from other solvers
+<span class="lineNum">    1319 </span><span class="lineCov">         79 :             importClauses();</span>
+<span class="lineNum">    1320 </span><span class="lineCov">         79 :             importProvenLiterals();</span>
+<span class="lineNum">    1321 </span>            : #endif /* SATURNIN_PARALLEL */
+<span class="lineNum">    1322 </span><span class="lineCov">         79 :             state = simplify();</span>
+<span class="lineNum">    1323 </span><span class="lineCov">         79 :             ASSERT_EQUAL(0U, propagationQueue.getSize());</span>
+<span class="lineNum">    1324 </span>            :         }
+<span class="lineNum">    1325 </span>            :     }
+<span class="lineNum">    1326 </span>            : #ifdef SATURNIN_PARALLEL
+<span class="lineNum">    1327 </span><span class="lineCov">         23 :     if(state != wUnknown &amp;&amp; parallelData != nullptr){</span>
+<span class="lineNum">    1328 </span><span class="lineCov">          2 :         unsigned int noSolver = parallelData-&gt;nbThreads +1;</span>
+<span class="lineNum">    1329 </span><span class="lineCov">          2 :         bool first = parallelData-&gt;winningSolver.compare_exchange_strong(noSolver, threadId);</span>
+<span class="lineNum">    1330 </span><span class="lineCov">          2 :         if(first){</span>
+<span class="lineNum">    1331 </span><span class="lineCov">          2 :             parallelData-&gt;solutionFound = true;</span>
+<span class="lineNum">    1332 </span>            :             //stop the other solvers
+<span class="lineNum">    1333 </span><span class="lineCov">          6 :             for(unsigned int i = 0; i&lt;parallelData-&gt;nbThreads; i++){</span>
+<span class="lineNum">    1334 </span><span class="lineCov">          4 :                 parallelData-&gt;solvers[i]-&gt;asyncStop = true;</span>
+<span class="lineNum">    1335 </span>            :             }
+<span class="lineNum">    1336 </span>            :         }
+<span class="lineNum">    1337 </span>            :     }
+<span class="lineNum">    1338 </span>            : #endif /* SATURNIN_PARALLEL */
+<span class="lineNum">    1339 </span>            : 
+<span class="lineNum">    1340 </span><span class="lineCov">         23 :     return state != wUnknown;</span>
+<a name="1341"><span class="lineNum">    1341 </span>            : }</a>
+<span class="lineNum">    1342 </span>            : 
+<span class="lineNum">    1343 </span><span class="lineCov">         99 : wbool Solver::search(int) {</span>
+<span class="lineNum">    1344 </span><span class="lineCov">         99 :     int currentNbConflict = 0;</span>
+<span class="lineNum">    1345 </span><span class="lineCov">         99 :     bool restart = false;</span>
+<span class="lineNum">    1346 </span><span class="lineCov">         99 :     wbool answer = state;</span>
+<span class="lineNum">    1347 </span><span class="lineCov">         99 :     SlidingMean lbdSlide(localLbdAverageLength);</span>
+<span class="lineNum">    1348 </span><span class="lineCov">     184257 :     while (!restart &amp;&amp; answer == wUnknown &amp;&amp; !asyncStop) {</span>
+<span class="lineNum">    1349 </span>            : 
+<span class="lineNum">    1350 </span><span class="lineCov">     184055 :         Lit* conflictingClause = propagate();</span>
+<span class="lineNum">    1351 </span><span class="lineCov">     184059 :         if (conflictingClause == nullptr) {</span>
+<span class="lineNum">    1352 </span><span class="lineCov">     171154 :             if (nbConfBeforeReduce == 0 &amp;&amp; assignLevel == 0) {</span>
+<span class="lineNum">    1353 </span><span class="lineCov">         11 :                 reduce();</span>
+<span class="lineNum">    1354 </span><span class="lineCov">         11 :                 reduceLimit += reduceIncrement;</span>
+<span class="lineNum">    1355 </span><span class="lineCov">         11 :                 nbConfBeforeReduce = reduceLimit;</span>
+<span class="lineNum">    1356 </span>            :             }
+<span class="lineNum">    1357 </span>            : 
+<span class="lineNum">    1358 </span>            :             //start a new assignation level
+<span class="lineNum">    1359 </span><span class="lineCov">     171154 :             assignLevel++;</span>
+<span class="lineNum">    1360 </span><span class="lineCov">     171154 :             stackPointer.push(stack.getSize());</span>
+<span class="lineNum">    1361 </span><span class="lineCov">     171153 :             ASSERT_EQUAL(assignLevel + 1, stackPointer.getSize());</span>
+<span class="lineNum">    1362 </span>            : 
+<span class="lineNum">    1363 </span>            :             //look for next variable
+<span class="lineNum">    1364 </span><span class="lineCov">     171154 :             if (varActivity.getSize() &gt; 0) {</span>
+<span class="lineNum">    1365 </span><span class="lineCov">     171151 :                 Var v = varActivity.removeMin();</span>
+<span class="lineNum">    1366 </span><span class="lineCov">     581082 :                 while (assign[v] != wUnknown &amp;&amp; varActivity.getSize() &gt; 0) {</span>
+<span class="lineNum">    1367 </span><span class="lineCov">     238782 :                     v = varActivity.removeMin();</span>
+<span class="lineNum">    1368 </span>            :                 }
+<span class="lineNum">    1369 </span><span class="lineCov">     171151 :                 if (varActivity.getSize() == 0 &amp;&amp; assign[v] != wUnknown) {</span>
+<span class="lineNum">    1370 </span>            :                     //we couldn't find a variable not assigned
+<span class="lineNum">    1371 </span>            :                     //we did it, a solution was found!
+<span class="lineNum">    1372 </span><span class="lineCov">         11 :                     answer = wTrue;</span>
+<span class="lineNum">    1373 </span>            :                 } else {
+<span class="lineNum">    1374 </span><span class="lineCov">     171141 :                     Lit l = 0;</span>
+<span class="lineNum">    1375 </span><span class="lineCov">     171141 :                     if(presumption[v] == wUnknown){</span>
+<span class="lineNum">    1376 </span><span class="lineCov">     171133 :                         l = VariablesManager::getLit(v, phase[v] == wTrue);</span>
+<span class="lineNum">    1377 </span>            :                     }else{
+<span class="lineNum">    1378 </span><span class="lineCov">          6 :                         l = VariablesManager::getLit(v, presumption[v] == wTrue);</span>
+<span class="lineNum">    1379 </span>            :                     }
+<span class="lineNum">    1380 </span>            : 
+<span class="lineNum">    1381 </span><span class="lineCov">     171140 :                     enqueue(l);</span>
+<span class="lineNum">    1382 </span>            :                 }
+<span class="lineNum">    1383 </span>            :             } else {
+<span class="lineNum">    1384 </span>            :                 //we did it, a solution was found!
+<span class="lineNum">    1385 </span><span class="lineCov">          3 :                 answer = wTrue;</span>
+<span class="lineNum">    1386 </span>            :             }
+<span class="lineNum">    1387 </span>            :         } else {
+<span class="lineNum">    1388 </span><span class="lineCov">      12905 :             currentNbConflict++;</span>
+<span class="lineNum">    1389 </span><span class="lineCov">      12905 :             conflicts++;</span>
+<span class="lineNum">    1390 </span>            : 
+<span class="lineNum">    1391 </span>            :             //see Gilles Audemard, Laurent Simon
+<span class="lineNum">    1392 </span>            :             //&quot;Refining Restarts Strategies For SAT and UNSAT&quot;
+<span class="lineNum">    1393 </span>            :             //in 18th International Conference on Principles and Practice of Constraint Programming (CP'12)
+<span class="lineNum">    1394 </span>            :             //Springer, pp. 118-126, october 2012.
+<span class="lineNum">    1395 </span><span class="lineCov">      12905 :             stackSize.addValue(stack.getSize());</span>
+<span class="lineNum">    1396 </span><span class="lineCov">      12903 :             if (conflicts &gt; 10000 &amp;&amp; lbdSlide.isFull() &amp;&amp; stack.getSize() &gt; stackDifferenceFactor * stackSize.getMean()) {</span>
+<span class="lineNum">    1397 </span><span class="lineNoCov">          0 :                 lbdSlide.reset();</span>
+<span class="lineNum">    1398 </span>            :             }
+<span class="lineNum">    1399 </span>            : 
+<span class="lineNum">    1400 </span>            :             //if we already are on level 0, it means we have proven UNSAT
+<span class="lineNum">    1401 </span><span class="lineCov">      12903 :             if (assignLevel == 0) {</span>
+<span class="lineNum">    1402 </span><span class="lineCov">          5 :                 answer = wFalse;</span>
+<span class="lineNum">    1403 </span>            :             } else {
+<span class="lineNum">    1404 </span><span class="lineCov">      12898 :                 Clause* learnt = treatConflict(conflictingClause);</span>
+<span class="lineNum">    1405 </span><span class="lineCov">      12900 :                 if(state == wFalse) answer = wFalse;</span>
+<span class="lineNum">    1406 </span><span class="lineCov">      12900 :                 lbdSlide.addValue(learnt != nullptr ? learnt-&gt;getLBD() : 1);</span>
+<span class="lineNum">    1407 </span>            :             }
+<span class="lineNum">    1408 </span>            :             
+<span class="lineNum">    1409 </span>            :             //Check if a restart is needed
+<span class="lineNum">    1410 </span><span class="lineCov">      21573 :             restart = lbdSlide.isFull() &amp;&amp;</span>
+<span class="lineNum">    1411 </span><span class="lineCov">      21575 :                     lbdSlide.getMean() * lbdDifferenceFactor &gt; lbdMean.getMean();</span>
+<span class="lineNum">    1412 </span>            : 
+<span class="lineNum">    1413 </span>            :             //Check if a reduce needs to be performed
+<span class="lineNum">    1414 </span><span class="lineCov">      12906 :             if (nbConfBeforeReduce &gt; 0) {</span>
+<span class="lineNum">    1415 </span><span class="lineCov">       8627 :                 nbConfBeforeReduce--;</span>
+<span class="lineNum">    1416 </span>            :             }
+<span class="lineNum">    1417 </span>            :         }
+<span class="lineNum">    1418 </span>            :     }
+<span class="lineNum">    1419 </span>            : 
+<span class="lineNum">    1420 </span><span class="lineCov">        102 :     if (verbosity &gt; 0) {</span>
+<span class="lineNum">    1421 </span><span class="lineNoCov">          0 :         double m = 0;</span>
+<span class="lineNum">    1422 </span><span class="lineNoCov">          0 :         if (lbdSlide.getNbValues() &gt; 0) {</span>
+<span class="lineNum">    1423 </span><span class="lineNoCov">          0 :             m = lbdSlide.getMean();</span>
+<span class="lineNum">    1424 </span>            :         }
+<span class="lineNum">    1425 </span><span class="lineNoCov">          0 :         fprintf(Logger::getStdOutLogger().getOutput(),</span>
+<span class="lineNum">    1426 </span>            : #ifdef SATURNIN_PARALLEL
+<span class="lineNum">    1427 </span>            :                 &quot;thread: %4d, nbConflicts: %8&quot; PRIu64 &quot;, prop: %8&quot; PRIu64 &quot;, avg lbd: %5.1f\n&quot;,
+<span class="lineNum">    1428 </span><span class="lineNoCov">          0 :                 threadId, conflicts, nbPropag, m);</span>
+<span class="lineNum">    1429 </span>            : #else
+<span class="lineNum">    1430 </span>            :                 &quot;nbConflicts: %8&quot; PRIu64 &quot;, prop: %8&quot; PRIu64 &quot;, avg lbd: %5.1f\n&quot;,
+<span class="lineNum">    1431 </span>            :                 conflicts, nbPropag, m);
+<span class="lineNum">    1432 </span>            : #endif /* SATURNIN_PARALLEL */ 
+<span class="lineNum">    1433 </span>            :     }
+<span class="lineNum">    1434 </span><span class="lineCov">        102 :     return answer;</span>
+<a name="1435"><span class="lineNum">    1435 </span>            : }</a>
+<span class="lineNum">    1436 </span>            : 
+<span class="lineNum">    1437 </span><span class="lineCov">    4530798 : void Solver::enqueue(Lit l, Lit* r) {</span>
+<span class="lineNum">    1438 </span>            : 
+<span class="lineNum">    1439 </span><span class="lineCov">    4530798 :     Var v = VariablesManager::getVar(l);</span>
+<span class="lineNum">    1440 </span>            : 
+<span class="lineNum">    1441 </span><span class="lineCov">    4531195 :     ASSERT(wUnknown == assign[v]);</span>
+<span class="lineNum">    1442 </span><span class="lineCov">    4530926 :     ASSERT(nullptr == reasons[v]);</span>
+<span class="lineNum">    1443 </span><span class="lineCov">    4531114 :     wbool sign = VariablesManager::getLitSign(l) ? wTrue : wFalse;</span>
+<span class="lineNum">    1444 </span><span class="lineCov">    4531104 :     assign[v] = sign;</span>
+<span class="lineNum">    1445 </span>            : 
+<span class="lineNum">    1446 </span>            : #ifdef DEBUG
+<span class="lineNum">    1447 </span>            :     //make sure that every literal but the first is assigned to false
+<span class="lineNum">    1448 </span><span class="lineCov">   13294512 :     for (Lit* i = r + 1; r != nullptr &amp;&amp; *i != lit_Undef; i++) {</span>
+<span class="lineNum">    1449 </span><span class="lineCov">    8763644 :         Var vTmp = VariablesManager::getVar(*i);</span>
+<span class="lineNum">    1450 </span><span class="lineCov">    8764018 :         ASSERT(assign[vTmp] != wUnknown);</span>
+<span class="lineNum">    1451 </span><span class="lineCov">    8764024 :         ASSERT(assign[vTmp] == (VariablesManager::getLitSign(*i) ? wFalse : wTrue));</span>
+<span class="lineNum">    1452 </span>            :     }
+<span class="lineNum">    1453 </span>            : #endif /* DEBUG */
+<span class="lineNum">    1454 </span>            : 
+<span class="lineNum">    1455 </span><span class="lineCov">    4530868 :     if (lastReduceSeen[v] != nbReducePerformed) {</span>
+<span class="lineNum">    1456 </span><span class="lineCov">     271262 :         nbVarSeenBtwReduce++;</span>
+<span class="lineNum">    1457 </span><span class="lineCov">     271262 :         lastReduceSeen[v] = nbReducePerformed;</span>
+<span class="lineNum">    1458 </span>            :     }
+<span class="lineNum">    1459 </span>            : 
+<span class="lineNum">    1460 </span><span class="lineCov">    4530695 :     phase[v] = sign;</span>
+<span class="lineNum">    1461 </span><span class="lineCov">    4530759 :     varLevel[v] = assignLevel;</span>
+<span class="lineNum">    1462 </span><span class="lineCov">    4530395 :     reasons[v] = r;</span>
+<span class="lineNum">    1463 </span>            : 
+<span class="lineNum">    1464 </span><span class="lineCov">    4530402 :     propagationQueue.push(VariablesManager::oppositeLit(l));</span>
+<span class="lineNum">    1465 </span><span class="lineCov">    4530915 :     stack.push(l);</span>
+<span class="lineNum">    1466 </span>            : 
+<a name="1467"><span class="lineNum">    1467 </span><span class="lineCov">    4530177 : }</span></a>
+<span class="lineNum">    1468 </span>            : 
+<span class="lineNum">    1469 </span><span class="lineCov">      14138 : bool Solver::backtrack(unsigned int nbLvl) {</span>
+<span class="lineNum">    1470 </span>            :     //if we backtrack of 0 level, we stay at the same height and will loop
+<span class="lineNum">    1471 </span><span class="lineCov">      14138 :     ASSERT(nbLvl != 0);</span>
+<span class="lineNum">    1472 </span><span class="lineCov">      14139 :     nbLvl -= 1;</span>
+<span class="lineNum">    1473 </span><span class="lineCov">      14139 :     if (assignLevel &lt; nbLvl) {</span>
+<span class="lineNum">    1474 </span>            :         //bingo, inconsistent at level 0 -&gt; UNSAT
+<span class="lineNum">    1475 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">    1476 </span>            :     }
+<span class="lineNum">    1477 </span><span class="lineCov">      14139 :     stackPointer.pop(nbLvl);</span>
+<span class="lineNum">    1478 </span><span class="lineCov">      14139 :     ASSERT(stackPointer.getSize() &gt; 0);</span>
+<span class="lineNum">    1479 </span><span class="lineCov">      14139 :     unsigned int goal = stackPointer.getLast();</span>
+<span class="lineNum">    1480 </span><span class="lineCov">      14139 :     ASSERT(stack.getSize() &gt; goal);</span>
+<span class="lineNum">    1481 </span>            :     //revert the decisions/propagations that were made
+<span class="lineNum">    1482 </span><span class="lineCov">    4438366 :     while (stack.getSize() != goal) {</span>
+<span class="lineNum">    1483 </span><span class="lineCov">    4410764 :         Lit l = stack.getLast();</span>
+<span class="lineNum">    1484 </span><span class="lineCov">    4414459 :         Var v = VariablesManager::getVar(l);</span>
+<span class="lineNum">    1485 </span><span class="lineCov">    4414487 :         stack.pop();</span>
+<span class="lineNum">    1486 </span><span class="lineCov">    4414518 :         assign[v] = wUnknown;</span>
+<span class="lineNum">    1487 </span><span class="lineCov">    4414197 :         if (!varActivity.contains(v)) {</span>
+<span class="lineNum">    1488 </span><span class="lineCov">     296872 :             varActivity.add(v);</span>
+<span class="lineNum">    1489 </span>            :         }
+<span class="lineNum">    1490 </span><span class="lineCov">    4414225 :         reasons[v] = nullptr;</span>
+<span class="lineNum">    1491 </span>            : 
+<span class="lineNum">    1492 </span>            :     }
+<span class="lineNum">    1493 </span><span class="lineCov">      14139 :     assignLevel -= nbLvl + 1;</span>
+<span class="lineNum">    1494 </span>            : 
+<span class="lineNum">    1495 </span>            :     //Now that we have successfully remove every thing we made up to level + 1
+<span class="lineNum">    1496 </span>            :     //remove the last element of stack pointer to be as we were when we left
+<span class="lineNum">    1497 </span>            :     //the level we want to reach
+<span class="lineNum">    1498 </span><span class="lineCov">      14139 :     stackPointer.pop();</span>
+<span class="lineNum">    1499 </span>            : 
+<span class="lineNum">    1500 </span>            :     //The only assignation level that could be empty is level 0 if no
+<span class="lineNum">    1501 </span>            :     //literal has been proven
+<span class="lineNum">    1502 </span><span class="lineCov">      14139 :     ASSERT(stackPointer.getLast() &lt; stack.getSize() ||</span>
+<span class="lineNum">    1503 </span>            :             (stackPointer.getLast() == 0 &amp;&amp; stack.getSize() == 0));
+<span class="lineNum">    1504 </span><span class="lineCov">      14138 :     ASSERT_EQUAL(assignLevel + 1, stackPointer.getSize());</span>
+<span class="lineNum">    1505 </span>            : 
+<span class="lineNum">    1506 </span><span class="lineCov">      14139 :     return true;</span>
+<a name="1507"><span class="lineNum">    1507 </span>            : }</a>
+<span class="lineNum">    1508 </span>            : 
+<span class="lineNum">    1509 </span><span class="lineCov">          4 : void Solver::printClause(Clause* c, bool color, FILE * out) const {</span>
+<span class="lineNum">    1510 </span><span class="lineCov">          4 :     printClause(c-&gt;lits(), color, out);</span>
+<a name="1511"><span class="lineNum">    1511 </span><span class="lineCov">          4 : }</span></a>
+<span class="lineNum">    1512 </span>            : 
+<span class="lineNum">    1513 </span><span class="lineCov">          4 : void Solver::printClause(Lit* c, bool color, FILE* out) const {</span>
+<span class="lineNum">    1514 </span><span class="lineCov">         16 :     for (unsigned int i = 0; c[i] != lit_Undef; i++) {</span>
+<span class="lineNum">    1515 </span><span class="lineCov">         12 :         printLit(c[i], color, out);</span>
+<span class="lineNum">    1516 </span><span class="lineCov">         12 :         if (c[i + 1] != lit_Undef) {</span>
+<span class="lineNum">    1517 </span><span class="lineCov">          8 :             fprintf(out, &quot; &quot;);</span>
+<span class="lineNum">    1518 </span>            :         }
+<span class="lineNum">    1519 </span>            :     }
+<a name="1520"><span class="lineNum">    1520 </span><span class="lineCov">          4 : }</span></a>
+<span class="lineNum">    1521 </span>            : 
+<span class="lineNum">    1522 </span><span class="lineCov">          2 : void Solver::printClauses(bool color, const char* const sep, FILE * out) const {</span>
+<span class="lineNum">    1523 </span><span class="lineCov">          6 :     for (unsigned int i = 0; i &lt; clauses.getSize(); i++) {</span>
+<span class="lineNum">    1524 </span><span class="lineCov">          4 :         printClause(clauses[i], color, out);</span>
+<span class="lineNum">    1525 </span><span class="lineCov">          4 :         if (i + 1 &lt; clauses.getSize()) {</span>
+<span class="lineNum">    1526 </span><span class="lineCov">          2 :             fprintf(out, &quot;%s&quot;, sep);</span>
+<span class="lineNum">    1527 </span>            :         }
+<span class="lineNum">    1528 </span>            :     }
+<a name="1529"><span class="lineNum">    1529 </span><span class="lineCov">          2 : }</span></a>
+<span class="lineNum">    1530 </span>            : 
+<span class="lineNum">    1531 </span><span class="lineCov">         10 : bool Solver::validate() {</span>
+<span class="lineNum">    1532 </span><span class="lineCov">         10 :     if (state == wFalse) {</span>
+<span class="lineNum">    1533 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">    1534 </span><span class="lineCov">          1 :         db.sanatize();</span>
+<span class="lineNum">    1535 </span><span class="lineCov">          1 :         return db.checkResolutions();</span>
+<span class="lineNum">    1536 </span>            : #else
+<span class="lineNum">    1537 </span>            :         return true;
+<span class="lineNum">    1538 </span>            : #endif /* SATURNIN_DB */
+<span class="lineNum">    1539 </span>            :     }
+<span class="lineNum">    1540 </span><span class="lineCov">          9 :     return checkClauseSetSatifiability(clauses, assign);</span>
+<a name="1541"><span class="lineNum">    1541 </span>            : }</a>
+<span class="lineNum">    1542 </span>            : 
+<span class="lineNum">    1543 </span><span class="lineCov">          9 : bool Solver::checkClauseSetSatifiability(const Array&lt;Clause*&gt;&amp; set,</span>
+<span class="lineNum">    1544 </span>            :         const Array&lt;wbool&gt;&amp; interpretation) const {
+<span class="lineNum">    1545 </span><span class="lineCov">       9079 :     for (unsigned int i = 0; i &lt; set.getSize(); i++) {</span>
+<span class="lineNum">    1546 </span><span class="lineCov">       9070 :         if (!set.get(i)-&gt;isSatisfied(interpretation)) {</span>
+<span class="lineNum">    1547 </span><span class="lineNoCov">          0 :             return false;</span>
+<span class="lineNum">    1548 </span>            :         }
+<span class="lineNum">    1549 </span>            :     }
+<span class="lineNum">    1550 </span><span class="lineCov">          9 :     return true;</span>
+<a name="1551"><span class="lineNum">    1551 </span>            : }</a>
+<span class="lineNum">    1552 </span>            : 
+<span class="lineNum">    1553 </span><span class="lineCov">      12896 : Clause* Solver::treatConflict(Lit* conflictingClause){</span>
+<span class="lineNum">    1554 </span><span class="lineCov">      12896 :     Array&lt;Lit&gt; res;</span>
+<span class="lineNum">    1555 </span><span class="lineCov">      12897 :     unsigned int btlevel = analyze(conflictingClause, res);</span>
+<span class="lineNum">    1556 </span><span class="lineCov">      12900 :     Clause* learnt = nullptr;</span>
+<span class="lineNum">    1557 </span><span class="lineCov">      12900 :     if (!backtrack(btlevel)) {</span>
+<span class="lineNum">    1558 </span>            :         //we found a contradiction at level 0, therefore the problem is
+<span class="lineNum">    1559 </span>            :         //UNSAT
+<span class="lineNum">    1560 </span><span class="lineNoCov">          0 :         state = wFalse;</span>
+<span class="lineNum">    1561 </span><span class="lineNoCov">          0 :         return nullptr;</span>
+<span class="lineNum">    1562 </span>            :     } else {
+<span class="lineNum">    1563 </span>            :         //a new clause was learnt
+<span class="lineNum">    1564 </span><span class="lineCov">      12900 :         learnt = addLearntClause(res);</span>
+<span class="lineNum">    1565 </span>            : #ifdef SATURNIN_PARALLEL
+<span class="lineNum">    1566 </span><span class="lineCov">      12901 :         exportClause(res, learnt == nullptr ? 1 : learnt-&gt;getLBD());</span>
+<span class="lineNum">    1567 </span>            : #endif /* SATURNIN_PARALLEL */
+<span class="lineNum">    1568 </span><span class="lineCov">      12901 :         if (learnt != nullptr) {</span>
+<span class="lineNum">    1569 </span><span class="lineCov">      12660 :             unsigned int lbd = learnt-&gt;getLBD();</span>
+<span class="lineNum">    1570 </span><span class="lineCov">      12660 :             lbdMean.addValue(lbd);</span>
+<span class="lineNum">    1571 </span><span class="lineCov">        241 :         } else if (res.getSize() == 2) {</span>
+<span class="lineNum">    1572 </span><span class="lineCov">        223 :             lbdMean.addValue(1);</span>
+<span class="lineNum">    1573 </span>            :         }
+<span class="lineNum">    1574 </span>            :     }
+<span class="lineNum">    1575 </span><span class="lineCov">      12900 :     vsidsInc *= (1 / vsidsDec);</span>
+<span class="lineNum">    1576 </span><span class="lineCov">      12900 :     return learnt;</span>
+<span class="lineNum">    1577 </span>            : }
+<a name="1578"><span class="lineNum">    1578 </span>            : </a>
+<span class="lineNum">    1579 </span>            : #ifdef SATURNIN_PARALLEL
+<span class="lineNum">    1580 </span><span class="lineCov">      12901 : void Solver::exportClause(Array&lt;Lit&gt;&amp; c, unsigned int lbd){</span>
+<span class="lineNum">    1581 </span><span class="lineCov">      25800 :     if(parallelData == nullptr) return;</span>
+<span class="lineNum">    1582 </span><span class="lineCov">       7590 :     if(c.getSize() == 1){</span>
+<span class="lineNum">    1583 </span><span class="lineNoCov">          0 :         for(unsigned int i = 0; i&lt;parallelData-&gt;solvers.getSize(); i++){</span>
+<span class="lineNum">    1584 </span><span class="lineNoCov">          0 :             if(i == threadId) continue;</span>
+<span class="lineNum">    1585 </span><span class="lineNoCov">          0 :             unsigned int nextPos = (parallelData-&gt;freeNonIncludedLiteral[i][threadId]);</span>
+<span class="lineNum">    1586 </span><span class="lineNoCov">          0 :             parallelData-&gt;exchangedLiterals[i][threadId][nextPos] = c[0U];</span>
+<span class="lineNum">    1587 </span><span class="lineNoCov">          0 :             parallelData-&gt;freeNonIncludedLiteral[i][threadId] = (nextPos+1)%parallelData-&gt;maxNbProvenLit;</span>
+<span class="lineNum">    1588 </span>            :         }
+<span class="lineNum">    1589 </span>            :     }else{
+<span class="lineNum">    1590 </span><span class="lineCov">      22767 :         for(unsigned int i = 0; i&lt;parallelData-&gt;solvers.getSize(); i++){</span>
+<span class="lineNum">    1591 </span><span class="lineCov">      15180 :             if(i==threadId) continue;</span>
+<span class="lineNum">    1592 </span><span class="lineCov">       7590 :             Clause* toExport = exchangedClauses.retrieveClause((Lit*)c, c.getSize(), lbd);</span>
+<span class="lineNum">    1593 </span><span class="lineCov">       7589 :             unsigned int nextPos = (parallelData-&gt;freeNonIncludedClause[i][threadId]);</span>
+<span class="lineNum">    1594 </span><span class="lineCov">       7590 :             parallelData-&gt;exchangedClauses[i][threadId][nextPos] = toExport;</span>
+<span class="lineNum">    1595 </span><span class="lineCov">       7590 :             parallelData-&gt;freeNonIncludedClause[i][threadId] = (nextPos+1)%parallelData-&gt;maxNbExchanged;</span>
+<span class="lineNum">    1596 </span>            :         }
+<span class="lineNum">    1597 </span>            :     }
+<a name="1598"><span class="lineNum">    1598 </span>            : }</a>
+<span class="lineNum">    1599 </span>            : 
+<span class="lineNum">    1600 </span><span class="lineCov">       3324 : bool Solver::importClause(Clause* c){</span>
+<span class="lineNum">    1601 </span><span class="lineCov">       3324 :     ASSERT(parallelData != nullptr);</span>
+<span class="lineNum">    1602 </span><span class="lineCov">       3324 :     ASSERT_EQUAL(0U, assignLevel);</span>
+<span class="lineNum">    1603 </span>            :     
+<span class="lineNum">    1604 </span><span class="lineCov">       3324 :     unsigned int sz = c-&gt;getSize();</span>
+<span class="lineNum">    1605 </span>            : #ifdef DEBUG
+<span class="lineNum">    1606 </span><span class="lineCov">       3324 :     unsigned int initialSize = sz;</span>
+<span class="lineNum">    1607 </span>            : #endif /* DEBUG */
+<span class="lineNum">    1608 </span><span class="lineCov">       3324 :     Lit* literals = c-&gt;lits();</span>
+<span class="lineNum">    1609 </span>            :     //inside this loop, we do multiple things:
+<span class="lineNum">    1610 </span>            :     //first, we remove the literals that were proven to be false
+<span class="lineNum">    1611 </span>            :     //second, we count the number of potential watches
+<span class="lineNum">    1612 </span>            :     //third, we look for the variable with the highest level
+<span class="lineNum">    1613 </span><span class="lineCov">      48209 :     for(unsigned int i = 0, j = 0; i&lt;sz; i++){</span>
+<span class="lineNum">    1614 </span><span class="lineCov">      44885 :         if(assign[VariablesManager::getVar(c-&gt;getLit(i))] != wUnknown &amp;&amp; </span>
+<span class="lineNum">    1615 </span><span class="lineNoCov">          0 :                 varLevel[VariablesManager::getVar(c-&gt;getLit(i))] == 0){</span>
+<span class="lineNum">    1616 </span><span class="lineNoCov">          0 :             if(getLitValue(c-&gt;getLit(i)) == wTrue){</span>
+<span class="lineNum">    1617 </span><span class="lineNoCov">          0 :                 return true;</span>
+<span class="lineNum">    1618 </span>            :             }
+<span class="lineNum">    1619 </span>            :         }else {
+<span class="lineNum">    1620 </span><span class="lineCov">      44885 :             literals[j] = literals[i];</span>
+<span class="lineNum">    1621 </span><span class="lineCov">      44885 :             j++;</span>
+<span class="lineNum">    1622 </span>            :         }
+<span class="lineNum">    1623 </span>            :     }
+<span class="lineNum">    1624 </span><span class="lineCov">       3324 :     ASSERT_EQUAL(initialSize, c-&gt;getSize());</span>
+<span class="lineNum">    1625 </span>            :     
+<span class="lineNum">    1626 </span><span class="lineCov">       3324 :     if(sz == 0){</span>
+<span class="lineNum">    1627 </span><span class="lineNoCov">          0 :         return false;</span>
+<span class="lineNum">    1628 </span><span class="lineCov">       3324 :     }else if (sz == 1){</span>
+<span class="lineNum">    1629 </span>            :         //propagate
+<span class="lineNum">    1630 </span><span class="lineNoCov">          0 :         enqueue(c-&gt;getLit(0));</span>
+<span class="lineNum">    1631 </span><span class="lineNoCov">          0 :         Lit* conflict = propagate();</span>
+<span class="lineNum">    1632 </span><span class="lineNoCov">          0 :         if(conflict != nullptr) {</span>
+<span class="lineNum">    1633 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">    1634 </span>            :             //compute the reason of the conflict and add the empty clause to
+<span class="lineNum">    1635 </span>            :             //the database
+<span class="lineNum">    1636 </span><span class="lineNoCov">          0 :             Array&lt;Lit&gt; learnt(2);</span>
+<span class="lineNum">    1637 </span><span class="lineNoCov">          0 :             computeLearntClause(conflict, learnt);</span>
+<span class="lineNum">    1638 </span><span class="lineNoCov">          0 :             db.addClause(&amp;lit_Undef, db.nbClausesAdded());</span>
+<span class="lineNum">    1639 </span>            : #endif /* SATURNIN_DB */
+<span class="lineNum">    1640 </span><span class="lineNoCov">          0 :             state = wFalse;</span>
+<span class="lineNum">    1641 </span>            :         }
+<span class="lineNum">    1642 </span>            :     } else {
+<span class="lineNum">    1643 </span><span class="lineCov">       3324 :         if(c-&gt;getSize() &gt; sz){</span>
+<span class="lineNum">    1644 </span><span class="lineNoCov">          0 :             c-&gt;setLit(sz, lit_Undef);</span>
+<span class="lineNum">    1645 </span><span class="lineNoCov">          0 :             ASSERT_EQUAL(initialSize, c-&gt;getSize());</span>
+<span class="lineNum">    1646 </span>            :         }
+<span class="lineNum">    1647 </span><span class="lineCov">       3324 :         if (sz == 2) {</span>
+<span class="lineNum">    1648 </span><span class="lineCov">         69 :             Lit a = c-&gt;getLit(0);</span>
+<span class="lineNum">    1649 </span><span class="lineCov">         69 :             Lit b = c-&gt;getLit(1);</span>
+<span class="lineNum">    1650 </span><span class="lineCov">         69 :             binWatched[a].push(b);</span>
+<span class="lineNum">    1651 </span><span class="lineCov">         69 :             binWatched[b].push(a);</span>
+<span class="lineNum">    1652 </span><span class="lineCov">         69 :             nbBin++;</span>
+<span class="lineNum">    1653 </span>            :         } else {
+<span class="lineNum">    1654 </span><span class="lineCov">       3255 :             Clause* newClause = allocator.createClause(c-&gt;lits(), sz);</span>
+<span class="lineNum">    1655 </span><span class="lineCov">       3255 :             ASSERT(newClause-&gt;isAttached());</span>
+<span class="lineNum">    1656 </span><span class="lineCov">       3255 :             unsigned int lbd = computeLBD(newClause);</span>
+<span class="lineNum">    1657 </span><span class="lineCov">       3255 :             ASSERT(lbd != 0);</span>
+<span class="lineNum">    1658 </span><span class="lineCov">       6523 :             while (lbd &gt;= lbdValues.getSize()) {</span>
+<span class="lineNum">    1659 </span><span class="lineCov">         13 :                 lbdValues.push(0);</span>
+<span class="lineNum">    1660 </span>            :             }
+<span class="lineNum">    1661 </span><span class="lineCov">       3255 :             lbdValues[lbd]++;</span>
+<span class="lineNum">    1662 </span><span class="lineCov">       3255 :             newClause-&gt;setLBD(lbd);</span>
+<span class="lineNum">    1663 </span><span class="lineCov">       3255 :             newClause-&gt;setIndex(learntClauses.getSize());</span>
+<span class="lineNum">    1664 </span><span class="lineCov">       3255 :             learntClauses.push(newClause);</span>
+<span class="lineNum">    1665 </span><span class="lineCov">       3255 :             addWatchedClause(newClause);</span>
+<span class="lineNum">    1666 </span>            :         }
+<span class="lineNum">    1667 </span>            :     }
+<span class="lineNum">    1668 </span>            :     
+<span class="lineNum">    1669 </span><span class="lineCov">       3324 :     ASSERT(c-&gt;getSize() &lt;= initialSize);</span>
+<span class="lineNum">    1670 </span>            :     
+<span class="lineNum">    1671 </span>            :     //make sure we can re-use the allocated memory if we can
+<span class="lineNum">    1672 </span><span class="lineCov">       3324 :     this-&gt;exchangedClauses.provideClause(c);</span>
+<span class="lineNum">    1673 </span>            :     
+<span class="lineNum">    1674 </span><span class="lineCov">       3324 :     return state != wFalse;</span>
+<a name="1675"><span class="lineNum">    1675 </span>            : }</a>
+<span class="lineNum">    1676 </span>            : 
+<span class="lineNum">    1677 </span><span class="lineCov">         79 : bool Solver::importClauses() {</span>
+<span class="lineNum">    1678 </span><span class="lineCov">         79 :     if (parallelData == nullptr) return true;</span>
+<span class="lineNum">    1679 </span>            : 
+<span class="lineNum">    1680 </span><span class="lineCov">         58 :     bool isUnsat = false;</span>
+<span class="lineNum">    1681 </span><span class="lineCov">        174 :     for (unsigned int j = 0; j &lt; parallelData-&gt;solvers.getSize() &amp;&amp; !isUnsat; j++) {</span>
+<span class="lineNum">    1682 </span>            :         //no need to import our own things
+<span class="lineNum">    1683 </span><span class="lineCov">        116 :         if (j == threadId) continue;</span>
+<span class="lineNum">    1684 </span>            : 
+<span class="lineNum">    1685 </span><span class="lineCov">         58 :         unsigned int last = parallelData-&gt;freeNonIncludedClause[threadId][j];</span>
+<span class="lineNum">    1686 </span><span class="lineCov">         58 :         if (parallelData-&gt;firstNonIncludedClause[threadId][j] != last) {</span>
+<span class="lineNum">    1687 </span><span class="lineCov">         55 :             if (parallelData-&gt;firstNonIncludedClause[threadId][j] &gt; last) {</span>
+<span class="lineNum">    1688 </span><span class="lineCov">        946 :                 while (parallelData-&gt;firstNonIncludedClause[threadId][j] &lt; parallelData-&gt;maxNbExchanged &amp;&amp; !isUnsat) {</span>
+<span class="lineNum">    1689 </span>            :                     //import the clause
+<span class="lineNum">    1690 </span><span class="lineCov">        898 :                     unsigned int pos = parallelData-&gt;firstNonIncludedClause[threadId][j];</span>
+<span class="lineNum">    1691 </span><span class="lineCov">        898 :                     Clause* c = parallelData-&gt;exchangedClauses[threadId][j][pos];</span>
+<span class="lineNum">    1692 </span><span class="lineCov">        898 :                     ASSERT(c != nullptr);</span>
+<span class="lineNum">    1693 </span><span class="lineCov">        898 :                     parallelData-&gt;firstNonIncludedClause[threadId][j]++;</span>
+<span class="lineNum">    1694 </span><span class="lineCov">        898 :                     isUnsat = !importClause(c);</span>
+<span class="lineNum">    1695 </span>            :                 }
+<span class="lineNum">    1696 </span><span class="lineCov">         24 :                 parallelData-&gt;firstNonIncludedClause[threadId][j] = 0;</span>
+<span class="lineNum">    1697 </span>            :             }
+<span class="lineNum">    1698 </span><span class="lineCov">       2536 :             while (parallelData-&gt;firstNonIncludedClause[threadId][j] &lt; last &amp;&amp; !isUnsat) {</span>
+<span class="lineNum">    1699 </span>            :                 //import the clause 
+<span class="lineNum">    1700 </span><span class="lineCov">       2426 :                 unsigned int pos = parallelData-&gt;firstNonIncludedClause[threadId][j];</span>
+<span class="lineNum">    1701 </span><span class="lineCov">       2426 :                 Clause* c = parallelData-&gt;exchangedClauses[threadId][j][pos];</span>
+<span class="lineNum">    1702 </span><span class="lineCov">       2426 :                 ASSERT(c != nullptr);</span>
+<span class="lineNum">    1703 </span><span class="lineCov">       2426 :                 parallelData-&gt;firstNonIncludedClause[threadId][j]++;</span>
+<span class="lineNum">    1704 </span><span class="lineCov">       2426 :                 isUnsat = !importClause(c);</span>
+<span class="lineNum">    1705 </span>            :             }
+<span class="lineNum">    1706 </span>            :         }
+<span class="lineNum">    1707 </span>            :     }
+<span class="lineNum">    1708 </span>            : 
+<span class="lineNum">    1709 </span><span class="lineCov">         58 :     return !isUnsat;</span>
+<a name="1710"><span class="lineNum">    1710 </span>            : }</a>
+<span class="lineNum">    1711 </span>            : 
+<span class="lineNum">    1712 </span><span class="lineCov">         79 : bool Solver::importProvenLiterals() {</span>
+<span class="lineNum">    1713 </span><span class="lineCov">         79 :     if (parallelData == nullptr) return true;</span>
+<span class="lineNum">    1714 </span>            :     
+<span class="lineNum">    1715 </span><span class="lineCov">         58 :     ASSERT_EQUAL(0U, assignLevel);</span>
+<span class="lineNum">    1716 </span>            : 
+<span class="lineNum">    1717 </span><span class="lineCov">         58 :     bool isUnsat = false;</span>
+<span class="lineNum">    1718 </span><span class="lineCov">        174 :     for (unsigned int j = 0; j &lt; parallelData-&gt;solvers.getSize() &amp;&amp; !isUnsat; j++) {</span>
+<span class="lineNum">    1719 </span>            :         //no need to import our own things
+<span class="lineNum">    1720 </span><span class="lineCov">        116 :         if (j == threadId) continue;</span>
+<span class="lineNum">    1721 </span>            : 
+<span class="lineNum">    1722 </span><span class="lineCov">         58 :         unsigned int last = parallelData-&gt;freeNonIncludedLiteral[threadId][j];</span>
+<span class="lineNum">    1723 </span><span class="lineCov">         58 :         if (parallelData-&gt;firstNonIncludedLiteral[threadId][j] != last) {</span>
+<span class="lineNum">    1724 </span><span class="lineNoCov">          0 :             if (parallelData-&gt;firstNonIncludedLiteral[threadId][j] &gt; last) {</span>
+<span class="lineNum">    1725 </span><span class="lineNoCov">          0 :                 while (parallelData-&gt;firstNonIncludedLiteral[threadId][j] &lt; parallelData-&gt;maxNbProvenLit &amp;&amp; !isUnsat) {</span>
+<span class="lineNum">    1726 </span>            :                     //import the literal
+<span class="lineNum">    1727 </span><span class="lineNoCov">          0 :                     unsigned int pos = parallelData-&gt;firstNonIncludedLiteral[threadId][j];</span>
+<span class="lineNum">    1728 </span><span class="lineNoCov">          0 :                     Lit l = parallelData-&gt;exchangedLiterals[threadId][j][pos];</span>
+<span class="lineNum">    1729 </span><span class="lineNoCov">          0 :                     ASSERT_EQUAL(0U, assignLevel);</span>
+<span class="lineNum">    1730 </span><span class="lineNoCov">          0 :                     ASSERT(l != lit_Undef);</span>
+<span class="lineNum">    1731 </span><span class="lineNoCov">          0 :                     parallelData-&gt;firstNonIncludedLiteral[threadId][j]++;</span>
+<span class="lineNum">    1732 </span><span class="lineNoCov">          0 :                     isUnsat = !addClause(&amp;l, 1, true);</span>
+<span class="lineNum">    1733 </span>            :                 }
+<span class="lineNum">    1734 </span><span class="lineNoCov">          0 :                 parallelData-&gt;firstNonIncludedLiteral[threadId][j] = 0;</span>
+<span class="lineNum">    1735 </span>            :             }
+<span class="lineNum">    1736 </span><span class="lineNoCov">          0 :             while (parallelData-&gt;firstNonIncludedLiteral[threadId][j] &lt; last &amp;&amp; !isUnsat) {</span>
+<span class="lineNum">    1737 </span>            :                 //import the literal
+<span class="lineNum">    1738 </span><span class="lineNoCov">          0 :                 unsigned int pos = parallelData-&gt;firstNonIncludedLiteral[threadId][j];</span>
+<span class="lineNum">    1739 </span><span class="lineNoCov">          0 :                 Lit l = parallelData-&gt;exchangedLiterals[threadId][j][pos];</span>
+<span class="lineNum">    1740 </span><span class="lineNoCov">          0 :                 ASSERT_EQUAL(0U, assignLevel);</span>
+<span class="lineNum">    1741 </span><span class="lineNoCov">          0 :                 ASSERT(l != lit_Undef);</span>
+<span class="lineNum">    1742 </span><span class="lineNoCov">          0 :                 parallelData-&gt;firstNonIncludedLiteral[threadId][j]++;</span>
+<span class="lineNum">    1743 </span><span class="lineNoCov">          0 :                 isUnsat = !addClause(&amp;l, 1, true);</span>
+<span class="lineNum">    1744 </span>            :             }
+<span class="lineNum">    1745 </span>            :         }
+<span class="lineNum">    1746 </span>            :     }
+<span class="lineNum">    1747 </span><span class="lineCov">         58 :     return !isUnsat;</span>
+<span class="lineNum">    1748 </span>            : }
+<a name="1749"><span class="lineNum">    1749 </span>            : #endif /* SATURNIN_PARALLEL */</a>
+<span class="lineNum">    1750 </span>            : 
+<span class="lineNum">    1751 </span><span class="lineCov">          2 : size_t Solver::getMemoryFootprint() const {</span>
+<span class="lineNum">    1752 </span><span class="lineCov">          2 :     size_t mem = varLevel.getMemoryFootprint() + assign.getMemoryFootprint();</span>
+<span class="lineNum">    1753 </span><span class="lineCov">          2 :     mem += phase.getMemoryFootprint() + previousPhase.getMemoryFootprint();</span>
+<span class="lineNum">    1754 </span><span class="lineCov">          2 :     mem += presumption.getMemoryFootprint();</span>
+<span class="lineNum">    1755 </span><span class="lineCov">          2 :     mem += reasons.getMemoryFootprint() + binReasons.getMemoryFootprint();</span>
+<span class="lineNum">    1756 </span><span class="lineCov">          2 :     mem += binWatched.getMemoryFootprint();</span>
+<span class="lineNum">    1757 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">    1758 </span><span class="lineCov">          2 :     mem += db.getMemoryFootprint();</span>
+<span class="lineNum">    1759 </span>            : #endif /* SATURNIN_DB */
+<span class="lineNum">    1760 </span><span class="lineCov">         66 :     for (unsigned int i = 0; i &lt; binWatched.getSize(); i++) {</span>
+<span class="lineNum">    1761 </span><span class="lineCov">         64 :         mem += binWatched.get(i).getMemoryFootprint();</span>
+<span class="lineNum">    1762 </span>            :     }
+<span class="lineNum">    1763 </span><span class="lineCov">         66 :     for (unsigned int i = 0; i &lt; watchedClauses.getSize(); i++) {</span>
+<span class="lineNum">    1764 </span><span class="lineCov">         64 :         mem += watchedClauses.get(i).getMemoryFootprint();</span>
+<span class="lineNum">    1765 </span>            :     }
+<span class="lineNum">    1766 </span><span class="lineCov">          2 :     mem += monowatch.getMemoryFootprint();</span>
+<span class="lineNum">    1767 </span><span class="lineCov">         66 :     for (unsigned int i = 0; i &lt; watchedClauses.getSize(); i++) {</span>
+<span class="lineNum">    1768 </span><span class="lineCov">         64 :         mem += monowatch.get(i).getMemoryFootprint();</span>
+<span class="lineNum">    1769 </span>            :     }
+<span class="lineNum">    1770 </span><span class="lineCov">          2 :     mem += watchedClauses.getMemoryFootprint() + varActivityValue.getMemoryFootprint();</span>
+<span class="lineNum">    1771 </span><span class="lineCov">          2 :     mem += clauses.getMemoryFootprint() + learntClauses.getMemoryFootprint();</span>
+<span class="lineNum">    1772 </span><span class="lineCov">          2 :     mem += propagationQueue.getMemoryFootprint() + stack.getMemoryFootprint();</span>
+<span class="lineNum">    1773 </span><span class="lineCov">          2 :     mem += stackPointer.getMemoryFootprint() + varActivity.getMemoryFootprint();</span>
+<span class="lineNum">    1774 </span><span class="lineCov">          2 :     mem += allocator.getMemoryFootprint();</span>
+<span class="lineNum">    1775 </span><span class="lineCov">          2 :     mem += levelLBDChecked.getMemoryFootprint() + seen.getMemoryFootprint();</span>
+<span class="lineNum">    1776 </span><span class="lineCov">          2 :     mem += pureLitSearch.getMemoryFootprint();</span>
+<span class="lineNum">    1777 </span><span class="lineCov">          2 :     mem += lbdValues.getMemoryFootprint() + map.getMemoryFootprint() + revertMap.getMemoryFootprint();</span>
+<span class="lineNum">    1778 </span><span class="lineCov">          2 :     return mem;</span>
+<span class="lineNum">    1779 </span>            : }
+<span class="lineNum">    1780 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.10</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

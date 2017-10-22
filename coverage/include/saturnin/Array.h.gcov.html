@@ -1,0 +1,561 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - saturnin-coverage.info.cleaned - include/saturnin/Array.h</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">include/saturnin</a> - Array.h<span style="font-size: 80%;"> (source / <a href="Array.h.func.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">saturnin-coverage.info.cleaned</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">179</td>
+            <td class="headerCovTableEntry">179</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2017-10-22</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">213</td>
+            <td class="headerCovTableEntry">236</td>
+            <td class="headerCovTableEntryHi">90.3 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /*</a>
+<span class="lineNum">       2 </span>            : Copyright (c) &lt;2012&gt; &lt;B.Hoessen&gt;
+<span class="lineNum">       3 </span>            : 
+<span class="lineNum">       4 </span>            : This file is part of saturnin.
+<span class="lineNum">       5 </span>            : 
+<span class="lineNum">       6 </span>            : saturnin is free software: you can redistribute it and/or modify
+<span class="lineNum">       7 </span>            : it under the terms of the GNU General Public License as published by
+<span class="lineNum">       8 </span>            : the Free Software Foundation, either version 3 of the License, or
+<span class="lineNum">       9 </span>            : any later version.
+<span class="lineNum">      10 </span>            : 
+<span class="lineNum">      11 </span>            : saturnin is distributed in the hope that it will be useful,
+<span class="lineNum">      12 </span>            : but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      13 </span>            : MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      14 </span>            : GNU General Public License for more details.
+<span class="lineNum">      15 </span>            : 
+<span class="lineNum">      16 </span>            : You should have received a copy of the GNU General Public License
+<span class="lineNum">      17 </span>            : along with saturnin.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+<span class="lineNum">      18 </span>            : */
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : #ifndef SATURNIN_ARRAY_H
+<span class="lineNum">      21 </span>            : #define SATURNIN_ARRAY_H
+<span class="lineNum">      22 </span>            : 
+<span class="lineNum">      23 </span>            : #include &quot;Assert.h&quot;
+<span class="lineNum">      24 </span>            : #include &quot;Saturnin.h&quot;
+<span class="lineNum">      25 </span>            : #include &lt;cstdlib&gt;
+<span class="lineNum">      26 </span>            : //Needed for memccpy
+<span class="lineNum">      27 </span>            : #include &lt;cstring&gt;
+<span class="lineNum">      28 </span>            : //Needed for placement new
+<span class="lineNum">      29 </span>            : #include &lt;new&gt;
+<span class="lineNum">      30 </span>            : #include &lt;initializer_list&gt;
+<span class="lineNum">      31 </span>            : #include &lt;utility&gt;
+<span class="lineNum">      32 </span>            : 
+<span class="lineNum">      33 </span>            : namespace saturnin {
+<span class="lineNum">      34 </span>            :     
+<span class="lineNum">      35 </span>            : #ifdef SATURNIN_COUNT_ACCESS
+<span class="lineNum">      36 </span>            :     extern uint64_t _saturnin_array_access_;
+<span class="lineNum">      37 </span>            : #define SATURNIN_ARRAY_ACCESS() {_saturnin_array_access_++;}
+<span class="lineNum">      38 </span>            : #define SATURNIN_NB_ARRAY_ACCESS _saturnin_array_access_
+<span class="lineNum">      39 </span>            : #else
+<span class="lineNum">      40 </span>            : #define SATURNIN_ARRAY_ACCESS() {}
+<span class="lineNum">      41 </span>            : #define SATURNIN_NB_ARRAY_ACCESS (0UL)
+<span class="lineNum">      42 </span>            : #endif
+<span class="lineNum">      43 </span>            :     
+<span class="lineNum">      44 </span>            : //for compatibility issue, check that the noinline attribute is defined
+<span class="lineNum">      45 </span>            : #ifndef __attribute_noinline__
+<span class="lineNum">      46 </span>            : #ifdef __MINGW32__
+<span class="lineNum">      47 </span>            : #define __attribute_noinline__ __attribute__ ((noinline))
+<span class="lineNum">      48 </span>            : #else
+<span class="lineNum">      49 </span>            : #define __attribute_noinline__
+<span class="lineNum">      50 </span>            : #endif
+<span class="lineNum">      51 </span>            : #endif
+<span class="lineNum">      52 </span>            : 
+<span class="lineNum">      53 </span>            :     /**
+<span class="lineNum">      54 </span>            :      * This class aims to give a vector interface to an array. The capacity of
+<span class="lineNum">      55 </span>            :      * the array isn't needed as it can be moved if necessary.
+<span class="lineNum">      56 </span>            :      *
+<span class="lineNum">      57 </span>            :      * This implementation doesn't take care of constructors/destructors of the
+<span class="lineNum">      58 </span>            :      * elements. If anything special needs to be done, it must be done on your
+<span class="lineNum">      59 </span>            :      * side.
+<span class="lineNum">      60 </span>            :      */
+<span class="lineNum">      61 </span>            :     template&lt;typename T&gt;
+<span class="lineNum">      62 </span>            :     class Array final {
+<span class="lineNum">      63 </span>            :     public:
+<span class="lineNum">      64 </span>            :         
+<span class="lineNum">      65 </span>            :         /**
+<span class="lineNum">      66 </span>            :          * Creates a new Array of the given capacity
+<span class="lineNum">      67 </span>            :          * @param c the capacity of the new Array. It must be at least equal to
+<a name="68"><span class="lineNum">      68 </span>            :          * 2</a>
+<span class="lineNum">      69 </span>            :          */
+<span class="lineNum">      70 </span><span class="lineCov">    2246867 :         explicit Array(unsigned int c = 64) : cap(c&lt;2?2:c), size(0), data(nullptr) {</span>
+<span class="lineNum">      71 </span><span class="lineCov">    2246867 :             ASSERT(cap != 0);</span>
+<span class="lineNum">      72 </span><span class="lineCov">    2246896 :             auto toAllocate = cap * sizeof(T);</span>
+<span class="lineNum">      73 </span><span class="lineCov">    2246896 :             data = (T*) new char[toAllocate];</span>
+<span class="lineNum">      74 </span>            : #ifdef DEBUG
+<span class="lineNum">      75 </span><span class="lineCov">    2246929 :             memset(data, 0, toAllocate);</span>
+<span class="lineNum">      76 </span>            : #endif /* DEBUG */
+<span class="lineNum">      77 </span><span class="lineCov">    2246929 :         }</span>
+<span class="lineNum">      78 </span>            :         
+<span class="lineNum">      79 </span>            :         /**
+<span class="lineNum">      80 </span>            :          * Create an array containing the different elements of an initializer
+<span class="lineNum">      81 </span>            :          * list.
+<a name="82"><span class="lineNum">      82 </span>            :          * @param list the list containing the different elements to add</a>
+<span class="lineNum">      83 </span>            :          */
+<span class="lineNum">      84 </span><span class="lineCov">          4 :         Array(std::initializer_list&lt;T&gt; list) : cap(static_cast&lt;unsigned int&gt;(list.size())), size(0), data(nullptr) {</span>
+<span class="lineNum">      85 </span><span class="lineCov">          4 :             ASSERT(cap != 0);</span>
+<span class="lineNum">      86 </span><span class="lineCov">          4 :             auto toAllocate = cap * sizeof(T);</span>
+<span class="lineNum">      87 </span><span class="lineCov">          4 :             data = (T*) new char[toAllocate];</span>
+<span class="lineNum">      88 </span>            : #ifdef DEBUG
+<span class="lineNum">      89 </span><span class="lineCov">          4 :             memset(data, 0, toAllocate);</span>
+<span class="lineNum">      90 </span>            : #endif /* DEBUG */
+<span class="lineNum">      91 </span><span class="lineCov">          4 :             unsigned int i = 0;</span>
+<span class="lineNum">      92 </span><span class="lineCov">         17 :             for (auto j = list.begin(); j != list.end(); j++) {</span>
+<span class="lineNum">      93 </span><span class="lineCov">         13 :                 new (data + i) T(std::move(*j));</span>
+<span class="lineNum">      94 </span><span class="lineCov">         13 :                 i++;</span>
+<span class="lineNum">      95 </span>            :             }
+<span class="lineNum">      96 </span><span class="lineCov">          4 :             size = i;</span>
+<span class="lineNum">      97 </span><span class="lineCov">          4 :         }</span>
+<span class="lineNum">      98 </span>            : 
+<span class="lineNum">      99 </span>            :         //Deleted copy constructor. To obtain copy, use the copy() function
+<span class="lineNum">     100 </span>            :         Array(const Array&lt;T&gt;&amp; source) = delete;
+<span class="lineNum">     101 </span>            : 
+<span class="lineNum">     102 </span>            :         /**
+<span class="lineNum">     103 </span>            :          * Move constructor
+<a name="104"><span class="lineNum">     104 </span>            :          * @param source the source of the move, will be set to an emtpy 2 element array</a>
+<span class="lineNum">     105 </span>            :          */
+<span class="lineNum">     106 </span><span class="lineCov">     142725 :         Array(Array&lt;T&gt;&amp;&amp; source) : cap(source.cap), size(source.size), data(source.data) {</span>
+<span class="lineNum">     107 </span><span class="lineCov">     142725 :             source.cap = 0;</span>
+<span class="lineNum">     108 </span><span class="lineCov">     142725 :             source.size = 0;</span>
+<span class="lineNum">     109 </span><span class="lineCov">     142725 :             source.data = nullptr; //(T*) new char[2 * sizeof(T)];</span>
+<span class="lineNum">     110 </span>            : #ifdef DEBUG
+<span class="lineNum">     111 </span>            :             //memset(source.data, 0, 2 * sizeof(T));
+<span class="lineNum">     112 </span>            : #endif /* DEBUG */
+<span class="lineNum">     113 </span><span class="lineCov">     142725 :         }</span>
+<span class="lineNum">     114 </span>            : 
+<span class="lineNum">     115 </span>            :         //Deleted copy-assignement operator
+<span class="lineNum">     116 </span>            :         Array&amp; operator=(const Array&lt;T&gt;&amp;) = delete;
+<span class="lineNum">     117 </span>            : 
+<span class="lineNum">     118 </span>            :         /**
+<span class="lineNum">     119 </span>            :          * Move-assignment operator
+<span class="lineNum">     120 </span>            :          * @param source the source of the copy
+<a name="121"><span class="lineNum">     121 </span>            :          * @return the destination of the copy</a>
+<span class="lineNum">     122 </span>            :          */
+<span class="lineNum">     123 </span><span class="lineCov">          1 :         Array&amp; operator=(Array&lt;T&gt;&amp;&amp; source) {</span>
+<span class="lineNum">     124 </span><span class="lineCov">          1 :             delete[](reinterpret_cast&lt;char*&gt;(data));</span>
+<span class="lineNum">     125 </span><span class="lineCov">          1 :             cap = source.cap;</span>
+<span class="lineNum">     126 </span><span class="lineCov">          1 :             size = source.size;</span>
+<span class="lineNum">     127 </span><span class="lineCov">          1 :             data = source.data;</span>
+<span class="lineNum">     128 </span><span class="lineCov">          1 :             source.cap = 0;</span>
+<span class="lineNum">     129 </span><span class="lineCov">          1 :             source.size = 0;</span>
+<span class="lineNum">     130 </span><span class="lineCov">          1 :             source.data = nullptr; //(T*)std::malloc(2 * sizeof(T));</span>
+<span class="lineNum">     131 </span><span class="lineCov">          1 :             return *this;</span>
+<span class="lineNum">     132 </span>            :         }
+<span class="lineNum">     133 </span>            : 
+<span class="lineNum">     134 </span>            :         /**
+<a name="135"><span class="lineNum">     135 </span>            :          * Destructor</a>
+<span class="lineNum">     136 </span>            :          */
+<span class="lineNum">     137 </span><span class="lineCov">    2389599 :         ~Array() {</span>
+<span class="lineNum">     138 </span><span class="lineCov">    2389599 :                         unsigned int sz = size;</span>
+<span class="lineNum">     139 </span><span class="lineCov">   24905323 :                         while (sz &gt; 0) {</span>
+<span class="lineNum">     140 </span><span class="lineCov">   20126125 :                 sz--;</span>
+<span class="lineNum">     141 </span><span class="lineCov">   19972063 :                 data[sz].~T();</span>
+<span class="lineNum">     142 </span>            :             }
+<span class="lineNum">     143 </span><span class="lineCov">    2389599 :             delete[](reinterpret_cast&lt;char*&gt;(data));</span>
+<span class="lineNum">     144 </span><span class="lineCov">    2389654 :             data = nullptr;</span>
+<span class="lineNum">     145 </span><span class="lineCov">    2389654 :         }</span>
+<span class="lineNum">     146 </span>            : 
+<span class="lineNum">     147 </span>            :         /**
+<span class="lineNum">     148 </span>            :          * Create a copy of this array.
+<span class="lineNum">     149 </span>            :          * The copy will have exactly the same capacity and will hold a copy of the element of this
+<span class="lineNum">     150 </span>            :          * array. The copy is performed using the copy constructor.
+<a name="151"><span class="lineNum">     151 </span>            :          * @return a copy of this array</a>
+<span class="lineNum">     152 </span>            :          */
+<span class="lineNum">     153 </span><span class="lineCov">          3 :         Array&lt;T&gt; copy() const {</span>
+<span class="lineNum">     154 </span><span class="lineCov">          3 :                         Array&lt;T&gt; other(cap);</span>
+<span class="lineNum">     155 </span><span class="lineCov">         11 :             for (unsigned int i = 0; i &lt; size; i++) {</span>
+<span class="lineNum">     156 </span><span class="lineCov">          8 :                                 ASSERT(data != nullptr);</span>
+<span class="lineNum">     157 </span><span class="lineCov">          8 :                 new (other.data + i) T(data[i]);</span>
+<span class="lineNum">     158 </span>            :             }
+<span class="lineNum">     159 </span><span class="lineCov">          3 :             other.size = size;</span>
+<span class="lineNum">     160 </span><span class="lineCov">          3 :             return std::move(other);</span>
+<span class="lineNum">     161 </span>            :         }
+<span class="lineNum">     162 </span>            : 
+<span class="lineNum">     163 </span>            :         /**
+<span class="lineNum">     164 </span>            :          * Retrieve the n-th element of the Array
+<span class="lineNum">     165 </span>            :          * @param i the position of the requested element
+<a name="166"><span class="lineNum">     166 </span>            :          * @return the requested element</a>
+<span class="lineNum">     167 </span>            :          */
+<span class="lineNum">     168 </span><span class="lineCov">  100021979 :         inline const T&amp; get(unsigned int i) const {</span>
+<span class="lineNum">     169 </span><span class="lineCov">  100021979 :             ASSERT(i &lt; size);</span>
+<span class="lineNum">     170 </span><span class="lineCov">  100024150 :                         ASSERT(data != nullptr);</span>
+<span class="lineNum">     171 </span>            :             SATURNIN_ARRAY_ACCESS();
+<span class="lineNum">     172 </span><span class="lineCov">  100027635 :             return data[i];</span>
+<span class="lineNum">     173 </span>            :         }
+<span class="lineNum">     174 </span>            : 
+<span class="lineNum">     175 </span>            :         /**
+<span class="lineNum">     176 </span>            :          * Retrieve the last element of the Array
+<a name="177"><span class="lineNum">     177 </span>            :          * @return a const reference to the last element</a>
+<span class="lineNum">     178 </span>            :          */
+<span class="lineNum">     179 </span><span class="lineCov">    4481491 :         inline const T&amp; getLast() const {</span>
+<span class="lineNum">     180 </span><span class="lineCov">    4481491 :             ASSERT(size &gt; 0);</span>
+<span class="lineNum">     181 </span><span class="lineCov">    4484885 :                         ASSERT(data != nullptr);</span>
+<span class="lineNum">     182 </span>            :             SATURNIN_ARRAY_ACCESS();
+<span class="lineNum">     183 </span><span class="lineCov">    4485145 :             return data[size - 1];</span>
+<span class="lineNum">     184 </span>            :         }
+<span class="lineNum">     185 </span>            :         
+<span class="lineNum">     186 </span>            :         /**
+<span class="lineNum">     187 </span>            :          * Compare two array. They are considered equals if they contains the
+<span class="lineNum">     188 </span>            :          * same elements in the same order. To compare the elements, the '=='
+<span class="lineNum">     189 </span>            :          * operator is used.
+<span class="lineNum">     190 </span>            :          * @param other the other array to compare to
+<a name="191"><span class="lineNum">     191 </span>            :          * @return true if they are equals, false otherwise.</a>
+<span class="lineNum">     192 </span>            :          */
+<span class="lineNum">     193 </span><span class="lineCov">          7 :         inline bool operator==(const Array&lt;T&gt;&amp; other){</span>
+<span class="lineNum">     194 </span><span class="lineCov">          7 :             if(size != other.size) return false;</span>
+<span class="lineNum">     195 </span><span class="lineCov">         13 :             for(unsigned int i = 0; i&lt;size; i++){</span>
+<span class="lineNum">     196 </span><span class="lineCov">          7 :                                 ASSERT(data != nullptr);</span>
+<span class="lineNum">     197 </span><span class="lineCov">          7 :                                 ASSERT(other.data != nullptr);</span>
+<span class="lineNum">     198 </span><span class="lineCov">          7 :                 if(!(data[i] == other.data[i])) return false;</span>
+<span class="lineNum">     199 </span>            :             }
+<span class="lineNum">     200 </span><span class="lineCov">          6 :             return true;</span>
+<span class="lineNum">     201 </span>            :         }
+<span class="lineNum">     202 </span>            : 
+<span class="lineNum">     203 </span>            :         /**
+<span class="lineNum">     204 </span>            :          * Retrieve the reference of the n-th element of the Array
+<span class="lineNum">     205 </span>            :          * @param i the position of the requested element
+<a name="206"><span class="lineNum">     206 </span>            :          * @return the reference to the requested element</a>
+<span class="lineNum">     207 </span>            :          */
+<span class="lineNum">     208 </span><span class="lineCov"> 1219337426 :         inline T&amp; operator[](unsigned int i) {</span>
+<span class="lineNum">     209 </span><span class="lineCov"> 1219337426 :             ASSERT(i &lt; size);</span>
+<span class="lineNum">     210 </span><span class="lineCov"> 1219794639 :                         ASSERT(data != nullptr);</span>
+<span class="lineNum">     211 </span>            :             SATURNIN_ARRAY_ACCESS();
+<span class="lineNum">     212 </span><span class="lineCov"> 1219810944 :             return data[i];</span>
+<span class="lineNum">     213 </span>            :         }
+<span class="lineNum">     214 </span>            : 
+<span class="lineNum">     215 </span>            :         /**
+<span class="lineNum">     216 </span>            :         * Retrieve the reference of the n-th element of the Array
+<span class="lineNum">     217 </span>            :         * @param i the position of the requested element
+<a name="218"><span class="lineNum">     218 </span>            :         * @return the reference to the requested element</a>
+<span class="lineNum">     219 </span>            :         */
+<span class="lineNum">     220 </span><span class="lineCov">   10879834 :         inline const T&amp; operator[](unsigned int i) const {</span>
+<span class="lineNum">     221 </span><span class="lineCov">   10879834 :             ASSERT(i &lt; size);</span>
+<span class="lineNum">     222 </span><span class="lineCov">   10882930 :                         ASSERT(data != nullptr);</span>
+<span class="lineNum">     223 </span>            :             SATURNIN_ARRAY_ACCESS();
+<span class="lineNum">     224 </span><span class="lineCov">   10884125 :             return data[i];</span>
+<span class="lineNum">     225 </span>            :         }
+<span class="lineNum">     226 </span>            : 
+<span class="lineNum">     227 </span>            :         /**
+<span class="lineNum">     228 </span>            :          * Retrieve the pointer to the start of the array
+<span class="lineNum">     229 </span>            :          * @return the pointer to the start of the array to be able to access
+<a name="230"><span class="lineNum">     230 </span>            :          *         it directly</a>
+<span class="lineNum">     231 </span>            :          */
+<span class="lineNum">     232 </span><span class="lineCov">    7025832 :         inline operator T*() {</span>
+<span class="lineNum">     233 </span><span class="lineCov">    7025832 :                         ASSERT(data != nullptr);</span>
+<span class="lineNum">     234 </span><span class="lineCov">    7025964 :             return data;</span>
+<span class="lineNum">     235 </span>            :         }
+<span class="lineNum">     236 </span>            : 
+<span class="lineNum">     237 </span>            :         /**
+<span class="lineNum">     238 </span>            :          * Retrieve the pointer to the start of the array
+<span class="lineNum">     239 </span>            :          * @return the pointer to the start of the array to be able to access
+<a name="240"><span class="lineNum">     240 </span>            :          *         it directly</a>
+<span class="lineNum">     241 </span>            :          */
+<span class="lineNum">     242 </span><span class="lineCov">     474207 :         inline operator const T*() const {</span>
+<span class="lineNum">     243 </span><span class="lineCov">     474207 :                         ASSERT(data != nullptr);</span>
+<span class="lineNum">     244 </span><span class="lineCov">     474279 :             return data;</span>
+<span class="lineNum">     245 </span>            :         }
+<span class="lineNum">     246 </span>            : 
+<span class="lineNum">     247 </span>            :         /**
+<span class="lineNum">     248 </span>            :          * Add a copy of the given element at the end of this Array
+<span class="lineNum">     249 </span>            :          * (The copy is performed through the copy assignment operator)
+<a name="250"><span class="lineNum">     250 </span>            :          * @param elmnt the element we want a copy into the Array</a>
+<span class="lineNum">     251 </span>            :          */
+<span class="lineNum">     252 </span><span class="lineCov">   46922135 :         void push(const T&amp; elmnt) {</span>
+<span class="lineNum">     253 </span><span class="lineCov">   46922135 :             if (size &gt;= cap) {</span>
+<span class="lineNum">     254 </span><span class="lineCov">     242757 :                 pushResize(elmnt);</span>
+<span class="lineNum">     255 </span><span class="lineCov">   47155658 :                 return;</span>
+<span class="lineNum">     256 </span>            :             }
+<span class="lineNum">     257 </span><span class="lineCov">   46679378 :             ASSERT(size &lt; cap);</span>
+<span class="lineNum">     258 </span><span class="lineCov">   46680357 :                         ASSERT(data != nullptr);</span>
+<span class="lineNum">     259 </span><span class="lineCov">   46679541 :             T* dest = &amp;(data[size]);</span>
+<span class="lineNum">     260 </span><span class="lineCov">   46679541 :             new (dest) T(elmnt);</span>
+<span class="lineNum">     261 </span><span class="lineCov">   46670144 :             size++;</span>
+<span class="lineNum">     262 </span>            :         }
+<span class="lineNum">     263 </span>            : 
+<span class="lineNum">     264 </span>            :         /**
+<span class="lineNum">     265 </span>            :         * Add the given element at the end of this Array
+<a name="266"><span class="lineNum">     266 </span>            :         * @param elmnt the element we want a copy into the Array</a>
+<span class="lineNum">     267 </span>            :         */
+<span class="lineNum">     268 </span><span class="lineCov">    4715342 :         void push(T&amp;&amp; elmnt) {</span>
+<span class="lineNum">     269 </span><span class="lineCov">    4715342 :             if (size &gt;= cap) {</span>
+<span class="lineNum">     270 </span><span class="lineCov">       1256 :                 pushResize(std::move(elmnt));</span>
+<span class="lineNum">     271 </span><span class="lineCov">    4716611 :                 return;</span>
+<span class="lineNum">     272 </span>            :             }
+<span class="lineNum">     273 </span><span class="lineCov">    4714086 :             ASSERT(size &lt; cap);</span>
+<span class="lineNum">     274 </span><span class="lineCov">    4714891 :                         ASSERT(data != nullptr);</span>
+<span class="lineNum">     275 </span><span class="lineCov">    4714218 :             T* dest = &amp;(data[size]);</span>
+<span class="lineNum">     276 </span><span class="lineCov">    4714218 :             new (dest) T(std::move(elmnt));</span>
+<span class="lineNum">     277 </span><span class="lineCov">    4714099 :             size++;</span>
+<span class="lineNum">     278 </span>            :         }
+<span class="lineNum">     279 </span>            : 
+<span class="lineNum">     280 </span>            :         /**
+<a name="281"><span class="lineNum">     281 </span>            :          * Add a new element in the Array. The default constructor will be used</a>
+<span class="lineNum">     282 </span>            :          */
+<span class="lineNum">     283 </span><span class="lineCov">     799072 :         void push(){</span>
+<span class="lineNum">     284 </span><span class="lineCov">     799072 :             if (size &gt;= cap){</span>
+<span class="lineNum">     285 </span><span class="lineCov">         12 :                 resize();</span>
+<span class="lineNum">     286 </span>            :             }
+<span class="lineNum">     287 </span><span class="lineCov">     799072 :             ASSERT(size&lt;cap);</span>
+<span class="lineNum">     288 </span><span class="lineCov">     799072 :                         ASSERT(data != nullptr);</span>
+<span class="lineNum">     289 </span><span class="lineCov">     799072 :             T* dest = &amp;(data[size]);</span>
+<span class="lineNum">     290 </span><span class="lineCov">     799072 :             new (dest) T();</span>
+<span class="lineNum">     291 </span><span class="lineCov">     799072 :             size++;</span>
+<span class="lineNum">     292 </span><span class="lineCov">     799072 :         }</span>
+<span class="lineNum">     293 </span>            : 
+<span class="lineNum">     294 </span>            :         /**
+<span class="lineNum">     295 </span>            :          * Remove the last element of this array
+<a name="296"><span class="lineNum">     296 </span>            :          * @return a copy of the element that was removed</a>
+<span class="lineNum">     297 </span>            :          */
+<span class="lineNum">     298 </span><span class="lineCov">   17407603 :         inline void pop() {</span>
+<span class="lineNum">     299 </span><span class="lineCov">   17407603 :             ASSERT(size &gt; 0);</span>
+<span class="lineNum">     300 </span><span class="lineCov">   17407557 :                         ASSERT(data != nullptr);</span>
+<span class="lineNum">     301 </span><span class="lineCov">   17407906 :             size--;</span>
+<span class="lineNum">     302 </span><span class="lineCov">   17339708 :             data[size].~T();</span>
+<span class="lineNum">     303 </span><span class="lineCov">   17407906 :         }</span>
+<span class="lineNum">     304 </span>            : 
+<span class="lineNum">     305 </span>            :         /**
+<span class="lineNum">     306 </span>            :          * Remove the n last elements of this array
+<a name="307"><span class="lineNum">     307 </span>            :          * @param n the number of elements to remove in this array</a>
+<span class="lineNum">     308 </span>            :          */
+<span class="lineNum">     309 </span><span class="lineCov">    9447347 :         inline void pop(unsigned int n) {</span>
+<span class="lineNum">     310 </span><span class="lineCov">    9447347 :             int nbToRemove = n &gt; size ? size : n;</span>
+<span class="lineNum">     311 </span><span class="lineCov">   33799835 :             while (nbToRemove &gt; 0) {</span>
+<span class="lineNum">     312 </span><span class="lineCov">   14905086 :                                 ASSERT(size &gt; 0);</span>
+<span class="lineNum">     313 </span><span class="lineCov">   14905102 :                                 ASSERT(data != nullptr);</span>
+<span class="lineNum">     314 </span><span class="lineCov">   14905141 :                 size--;</span>
+<span class="lineNum">     315 </span><span class="lineCov">   12590057 :                                 data[size].~T();</span>
+<span class="lineNum">     316 </span><span class="lineCov">   14905141 :                 nbToRemove--;</span>
+<span class="lineNum">     317 </span>            :             }
+<span class="lineNum">     318 </span><span class="lineCov">    9447402 :         }</span>
+<span class="lineNum">     319 </span>            : 
+<span class="lineNum">     320 </span>            :         /**
+<span class="lineNum">     321 </span>            :          * Retrieve the size of this Array
+<a name="322"><span class="lineNum">     322 </span>            :          * @return the number of element present in this Array</a>
+<span class="lineNum">     323 </span>            :          */
+<span class="lineNum">     324 </span><span class="lineCov">  128279440 :         inline unsigned int getSize() const {</span>
+<span class="lineNum">     325 </span><span class="lineCov">  128279440 :             return size;</span>
+<span class="lineNum">     326 </span>            :         }
+<span class="lineNum">     327 </span>            : 
+<span class="lineNum">     328 </span>            :         /**
+<span class="lineNum">     329 </span>            :          * Retrieve the capacity of this Array
+<span class="lineNum">     330 </span>            :          * @return the maximum number of elements this Array can contain
+<a name="331"><span class="lineNum">     331 </span>            :          *         before having to resize itself</a>
+<span class="lineNum">     332 </span>            :          */
+<span class="lineNum">     333 </span><span class="lineCov">        381 :         inline unsigned int getCapacity() const{</span>
+<span class="lineNum">     334 </span><span class="lineCov">        381 :             return cap;</span>
+<span class="lineNum">     335 </span>            :         }
+<span class="lineNum">     336 </span>            :         
+<span class="lineNum">     337 </span>            :         /**
+<span class="lineNum">     338 </span>            :          * Retrieve the memory footprint of this Array
+<a name="339"><span class="lineNum">     339 </span>            :          * @return the memory allocated in bytes for this array</a>
+<span class="lineNum">     340 </span>            :          */
+<span class="lineNum">     341 </span><span class="lineCov">        702 :         inline size_t getMemoryFootprint() const{</span>
+<span class="lineNum">     342 </span><span class="lineCov">        702 :             return cap * sizeof(T);</span>
+<span class="lineNum">     343 </span>            :         }
+<span class="lineNum">     344 </span>            : 
+<span class="lineNum">     345 </span>            :         /**
+<span class="lineNum">     346 </span>            :          * Retrieve a pointer to the first element
+<a name="347"><span class="lineNum">     347 </span>            :          * @return the pointer to the first element</a>
+<span class="lineNum">     348 </span>            :          */
+<span class="lineNum">     349 </span><span class="lineCov">      36164 :         inline T* begin() {</span>
+<span class="lineNum">     350 </span><span class="lineCov">      36164 :                         ASSERT(data != nullptr);</span>
+<span class="lineNum">     351 </span><span class="lineCov">      36166 :             return data;</span>
+<span class="lineNum">     352 </span>            :         }
+<span class="lineNum">     353 </span>            : 
+<span class="lineNum">     354 </span>            :         /**
+<span class="lineNum">     355 </span>            :         * Retrieve a pointer to the first element
+<a name="356"><span class="lineNum">     356 </span>            :         * @return the pointer to the first element</a>
+<span class="lineNum">     357 </span>            :         */
+<span class="lineNum">     358 </span><span class="lineCov">          2 :         inline const T* begin() const {</span>
+<span class="lineNum">     359 </span><span class="lineCov">          2 :                         ASSERT(data != nullptr);</span>
+<span class="lineNum">     360 </span><span class="lineCov">          2 :             return data;</span>
+<span class="lineNum">     361 </span>            :         }
+<span class="lineNum">     362 </span>            : 
+<span class="lineNum">     363 </span>            :         /**
+<span class="lineNum">     364 </span>            :         * Retrieve a pointer to the element after the last one
+<a name="365"><span class="lineNum">     365 </span>            :         * @return the pointer to the element after the last one</a>
+<span class="lineNum">     366 </span>            :         */
+<span class="lineNum">     367 </span><span class="lineCov">      36166 :         inline T* end() {</span>
+<span class="lineNum">     368 </span><span class="lineCov">      36166 :                         ASSERT(data != nullptr);</span>
+<span class="lineNum">     369 </span><span class="lineCov">      36166 :             return data+size;</span>
+<span class="lineNum">     370 </span>            :         }
+<span class="lineNum">     371 </span>            : 
+<span class="lineNum">     372 </span>            :         /**
+<span class="lineNum">     373 </span>            :         * Retrieve a pointer to the element after the last one
+<a name="374"><span class="lineNum">     374 </span>            :         * @return the pointer to the element after the last one</a>
+<span class="lineNum">     375 </span>            :         */
+<span class="lineNum">     376 </span><span class="lineCov">          2 :         inline const T* end() const {</span>
+<span class="lineNum">     377 </span><span class="lineCov">          2 :                         ASSERT(data != nullptr);</span>
+<span class="lineNum">     378 </span><span class="lineCov">          2 :             return data + size;</span>
+<span class="lineNum">     379 </span>            :         }
+<span class="lineNum">     380 </span>            : 
+<span class="lineNum">     381 </span>            :     private:
+<a name="382"><span class="lineNum">     382 </span>            : </a>
+<span class="lineNum">     383 </span>            :         /** Compute the update capacity */
+<span class="lineNum">     384 </span><span class="lineCov">     244018 :         constexpr static inline unsigned int updateFactor(unsigned int c) {</span>
+<span class="lineNum">     385 </span><span class="lineCov">     244018 :             return c &lt; 2 ? 2 : static_cast&lt;unsigned int&gt;(c * 1.65);</span>
+<span class="lineNum">     386 </span>            :         }
+<span class="lineNum">     387 </span>            : 
+<span class="lineNum">     388 </span>            :         /**
+<span class="lineNum">     389 </span>            :          * If the capacity of the array is not enough, this function will
+<a name="390"><span class="lineNum">     390 </span>            :          * copy the elements in a bigger array</a>
+<span class="lineNum">     391 </span>            :          */
+<span class="lineNum">     392 </span><span class="lineCov">         12 :         __attribute_noinline__ void resize() {</span>
+<span class="lineNum">     393 </span><span class="lineCov">         12 :             unsigned int newCap = updateFactor(cap);</span>
+<span class="lineNum">     394 </span><span class="lineCov">         12 :                         auto toAllocate = newCap * sizeof (T);</span>
+<span class="lineNum">     395 </span><span class="lineCov">         12 :             ASSERT(toAllocate &gt; (sizeof (T) * cap));</span>
+<span class="lineNum">     396 </span><span class="lineCov">         12 :                         T* tmp = (T*) new char[toAllocate];</span>
+<span class="lineNum">     397 </span><span class="lineCov">         12 :             ASSERT(tmp != nullptr);</span>
+<span class="lineNum">     398 </span>            : #ifdef DEBUG
+<span class="lineNum">     399 </span><span class="lineCov">         12 :             memset(tmp + cap, 0, newCap - cap);</span>
+<span class="lineNum">     400 </span>            : #endif /* DEBUG */
+<span class="lineNum">     401 </span><span class="lineCov">         12 :             memcpy(tmp, data, cap * sizeof (T));</span>
+<span class="lineNum">     402 </span><span class="lineCov">         12 :             delete[](reinterpret_cast&lt;char*&gt;(data));</span>
+<span class="lineNum">     403 </span><span class="lineCov">         12 :             data = tmp;</span>
+<span class="lineNum">     404 </span><span class="lineCov">         12 :             cap = newCap;</span>
+<span class="lineNum">     405 </span><span class="lineCov">         12 :         }</span>
+<span class="lineNum">     406 </span>            : 
+<span class="lineNum">     407 </span>            :         /**
+<span class="lineNum">     408 </span>            :          * Push an element to this array during a resize
+<span class="lineNum">     409 </span>            :          * Special care must be done as the reference might be to the first
+<span class="lineNum">     410 </span>            :          * element of the vector. Therefore, if we free the memory before using
+<span class="lineNum">     411 </span>            :          * it, we might encounter a problem
+<a name="412"><span class="lineNum">     412 </span>            :          * @param elmnt the reference to the element we wish to copy</a>
+<span class="lineNum">     413 </span>            :          */
+<span class="lineNum">     414 </span><span class="lineCov">     242754 :         __attribute_noinline__ void pushResize(const T&amp; elmnt) {</span>
+<span class="lineNum">     415 </span>            :             //create the new array
+<span class="lineNum">     416 </span><span class="lineCov">     242754 :             unsigned int newCap = updateFactor(cap);</span>
+<span class="lineNum">     417 </span><span class="lineCov">     242756 :                         auto toAllocate = newCap * sizeof (T);</span>
+<span class="lineNum">     418 </span><span class="lineCov">     242756 :             ASSERT(toAllocate &gt; (sizeof (T) * cap));</span>
+<span class="lineNum">     419 </span><span class="lineCov">     242757 :                         T* tmp = (T*) new char[toAllocate];</span>
+<span class="lineNum">     420 </span><span class="lineCov">     242757 :             ASSERT(tmp != nullptr);</span>
+<span class="lineNum">     421 </span>            : #ifdef DEBUG
+<span class="lineNum">     422 </span><span class="lineCov">     242757 :             memset(tmp + cap, 0, newCap - cap);</span>
+<span class="lineNum">     423 </span>            : #endif /* DEBUG */
+<span class="lineNum">     424 </span>            :             
+<span class="lineNum">     425 </span>            :             //copy the previous elements
+<span class="lineNum">     426 </span><span class="lineCov">     242757 :             memcpy(tmp, data, cap * sizeof (T));</span>
+<span class="lineNum">     427 </span>            : 
+<span class="lineNum">     428 </span>            :             //push the new element
+<span class="lineNum">     429 </span><span class="lineCov">     242757 :             T* dest = &amp;(tmp[size]);</span>
+<span class="lineNum">     430 </span><span class="lineCov">     242757 :             new (dest) T(elmnt);</span>
+<span class="lineNum">     431 </span><span class="lineCov">     242756 :             size++;</span>
+<span class="lineNum">     432 </span>            : 
+<span class="lineNum">     433 </span>            :             //delete the previous data
+<span class="lineNum">     434 </span><span class="lineCov">     242756 :             delete[](reinterpret_cast&lt;char*&gt;(data));</span>
+<span class="lineNum">     435 </span><span class="lineCov">     242756 :             data = tmp;</span>
+<span class="lineNum">     436 </span><span class="lineCov">     242756 :             cap = newCap;</span>
+<span class="lineNum">     437 </span><span class="lineCov">     242756 :         }</span>
+<span class="lineNum">     438 </span>            : 
+<span class="lineNum">     439 </span>            :                 
+<span class="lineNum">     440 </span>            : 
+<span class="lineNum">     441 </span>            :         /**
+<span class="lineNum">     442 </span>            :         * Push an element to this array during a resize
+<span class="lineNum">     443 </span>            :         * Special care must be done as the lvalue might be to the first
+<span class="lineNum">     444 </span>            :         * element of the vector. Therefore, if we free the memory before using
+<span class="lineNum">     445 </span>            :         * it, we might encounter a problem
+<a name="446"><span class="lineNum">     446 </span>            :         * @param elmnt the lreference to the element we wish to copy</a>
+<span class="lineNum">     447 </span>            :         */
+<span class="lineNum">     448 </span><span class="lineCov">       1251 :         __attribute_noinline__ void pushResize(T&amp;&amp; elmnt) {</span>
+<span class="lineNum">     449 </span>            :             //create the new array
+<span class="lineNum">     450 </span><span class="lineCov">       1251 :             unsigned int newCap = updateFactor(cap);</span>
+<span class="lineNum">     451 </span><span class="lineCov">       1251 :             auto toAllocate = newCap * sizeof (T);</span>
+<span class="lineNum">     452 </span><span class="lineCov">       1251 :             ASSERT(toAllocate &gt; (sizeof (T) * cap));</span>
+<span class="lineNum">     453 </span><span class="lineCov">       1254 :                         T* tmp = (T*) new char[toAllocate];</span>
+<span class="lineNum">     454 </span><span class="lineCov">       1256 :             ASSERT(tmp != nullptr);</span>
+<span class="lineNum">     455 </span>            : #ifdef DEBUG
+<span class="lineNum">     456 </span><span class="lineCov">       1256 :             memset(tmp + cap, 0, newCap - cap);</span>
+<span class="lineNum">     457 </span>            : #endif /* DEBUG */
+<span class="lineNum">     458 </span>            : 
+<span class="lineNum">     459 </span>            :             //copy the previous elements
+<span class="lineNum">     460 </span><span class="lineCov">       1256 :             memcpy(tmp, data, cap * sizeof(T));</span>
+<span class="lineNum">     461 </span>            : 
+<span class="lineNum">     462 </span>            :             //push the new element
+<span class="lineNum">     463 </span><span class="lineCov">       1256 :             T* dest = &amp;(tmp[size]);</span>
+<span class="lineNum">     464 </span><span class="lineCov">       1256 :             new (dest) T(std::move(elmnt));</span>
+<span class="lineNum">     465 </span><span class="lineCov">       1254 :             size++;</span>
+<span class="lineNum">     466 </span>            : 
+<span class="lineNum">     467 </span>            :             //delete the previous data
+<span class="lineNum">     468 </span><span class="lineCov">       1254 :             delete[](reinterpret_cast&lt;char*&gt;(data));</span>
+<span class="lineNum">     469 </span><span class="lineCov">       1256 :             data = tmp;</span>
+<span class="lineNum">     470 </span><span class="lineCov">       1256 :             cap = newCap;</span>
+<span class="lineNum">     471 </span><span class="lineCov">       1256 :         }</span>
+<span class="lineNum">     472 </span>            : 
+<span class="lineNum">     473 </span>            :         /** The capacity of the array */
+<span class="lineNum">     474 </span>            :         unsigned int cap;
+<span class="lineNum">     475 </span>            :         /** The size of the array */
+<span class="lineNum">     476 </span>            :         unsigned int size;
+<span class="lineNum">     477 </span>            :         /** The pointer to the memory location of the array */
+<span class="lineNum">     478 </span>            :         T* data;
+<span class="lineNum">     479 </span>            : 
+<span class="lineNum">     480 </span>            :     };
+<span class="lineNum">     481 </span>            : 
+<span class="lineNum">     482 </span>            : }
+<span class="lineNum">     483 </span>            : 
+<span class="lineNum">     484 </span>            : #endif  /* SATURNIN_ARRAY_H */
+<span class="lineNum">     485 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.10</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

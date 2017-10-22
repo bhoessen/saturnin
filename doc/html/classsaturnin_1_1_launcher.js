@@ -1,0 +1,27 @@
+var classsaturnin_1_1_launcher =
+[
+    [ "Launcher", "classsaturnin_1_1_launcher.html#a7fb0e5193edf1803de98121a10771cb9", null ],
+    [ "getAvgClauseLength", "classsaturnin_1_1_launcher.html#aa9f6b525b9b4015e9eece42917df2460", null ],
+    [ "getEllapsedTime", "classsaturnin_1_1_launcher.html#aa48381a37489304de4004698412a41f0", null ],
+    [ "getInstanceName", "classsaturnin_1_1_launcher.html#adfb4db8ae7cfdc4d29dc7c7f5d0ded2b", null ],
+    [ "getMaxClauseLength", "classsaturnin_1_1_launcher.html#ab7c26b7a63cc826c22f5916bf8ece1bc", null ],
+    [ "getNbClauses", "classsaturnin_1_1_launcher.html#a2e1a27ea418fb251bb83bb4b657b9888", null ],
+    [ "getNbVar", "classsaturnin_1_1_launcher.html#a106b25c66c5ff466c3f3cbb92a04351c", null ],
+    [ "getSolver", "classsaturnin_1_1_launcher.html#a42fbb287e01188877d8fa71eba3cb7ad", null ],
+    [ "printHelp", "classsaturnin_1_1_launcher.html#acf21695d21bc58ae7ddcbe46db7ee87d", null ],
+    [ "printMemoryValue", "classsaturnin_1_1_launcher.html#a3395b90b3b7be763586ae2fb4fe1fb8b", null ],
+    [ "printResult", "classsaturnin_1_1_launcher.html#a6a9aada6920ace7d2adeffb939ca6e42", null ],
+    [ "printStats", "classsaturnin_1_1_launcher.html#a9fd517c6c584a805344a0e4800d3ceb5", null ],
+    [ "simplify", "classsaturnin_1_1_launcher.html#a554b373c90e3f22a79a9e7d3511fba54", null ],
+    [ "solve", "classsaturnin_1_1_launcher.html#ae3be6ebcd82922d801e8a14a2b2816f6", null ],
+    [ "stop", "classsaturnin_1_1_launcher.html#a85ac6fbba38ccedf197de59972faca04", null ],
+    [ "avgLenght", "classsaturnin_1_1_launcher.html#a5c71e1f21ffd50b02dc5b96677ce8649", null ],
+    [ "clean_exit", "classsaturnin_1_1_launcher.html#a42a77936a6988cbad04ebe441906ac05", null ],
+    [ "instanceName", "classsaturnin_1_1_launcher.html#a43cfdd2b2f7f32e5b361f477827c74b9", null ],
+    [ "maxLenght", "classsaturnin_1_1_launcher.html#a428502aebc1d568bccc437860c4ba8a0", null ],
+    [ "nbClauses", "classsaturnin_1_1_launcher.html#a2fe7abc727e44e386feca514a89844f5", null ],
+    [ "nbVar", "classsaturnin_1_1_launcher.html#aa4ec4d49bb6a286a75eef23dcb2ba50d", null ],
+    [ "readMem", "classsaturnin_1_1_launcher.html#ad20b69cd5e137e12408c565ee36a6df0", null ],
+    [ "solver", "classsaturnin_1_1_launcher.html#a4d4be6530dfdc9c68a12da35c52eba09", null ],
+    [ "w", "classsaturnin_1_1_launcher.html#af1b5b7e482a0409028a854bba51efe5d", null ]
+];

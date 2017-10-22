@@ -1,0 +1,244 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - saturnin-coverage.info.cleaned - include/saturnin/DBWrapper.h</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">include/saturnin</a> - DBWrapper.h<span style="font-size: 80%;"> (source / <a href="DBWrapper.h.func.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">saturnin-coverage.info.cleaned</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">4</td>
+            <td class="headerCovTableEntry">4</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2017-10-22</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /*</a>
+<span class="lineNum">       2 </span>            : Copyright (c) &lt;2015&gt; &lt;B.Hoessen&gt;
+<span class="lineNum">       3 </span>            : 
+<span class="lineNum">       4 </span>            : This file is part of saturnin.
+<span class="lineNum">       5 </span>            : 
+<span class="lineNum">       6 </span>            : saturnin is free software: you can redistribute it and/or modify
+<span class="lineNum">       7 </span>            : it under the terms of the GNU General Public License as published by
+<span class="lineNum">       8 </span>            : the Free Software Foundation, either version 3 of the License, or
+<span class="lineNum">       9 </span>            : any later version.
+<span class="lineNum">      10 </span>            : 
+<span class="lineNum">      11 </span>            : saturnin is distributed in the hope that it will be useful,
+<span class="lineNum">      12 </span>            : but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      13 </span>            : MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      14 </span>            : GNU General Public License for more details.
+<span class="lineNum">      15 </span>            : 
+<span class="lineNum">      16 </span>            : You should have received a copy of the GNU General Public License
+<span class="lineNum">      17 </span>            : along with saturnin.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+<span class="lineNum">      18 </span>            : */
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : #ifndef SATURNIN_DBWRAPPER_H
+<span class="lineNum">      21 </span>            : #define SATURNIN_DBWRAPPER_H
+<span class="lineNum">      22 </span>            : #ifdef SATURNIN_DB
+<span class="lineNum">      23 </span>            : 
+<span class="lineNum">      24 </span>            : #include &quot;VariablesManager.h&quot;
+<span class="lineNum">      25 </span>            : #include &quot;Array.h&quot;
+<span class="lineNum">      26 </span>            : #include &quot;Saturnin.h&quot;
+<span class="lineNum">      27 </span>            : #include &lt;string&gt;
+<span class="lineNum">      28 </span>            : 
+<span class="lineNum">      29 </span>            : /** Forward declaration of the DB class */
+<span class="lineNum">      30 </span>            : typedef struct sqlite3 sqlite3;
+<span class="lineNum">      31 </span>            : 
+<span class="lineNum">      32 </span>            : namespace saturnin {
+<span class="lineNum">      33 </span>            : 
+<span class="lineNum">      34 </span>            :     /** Forward declaration */
+<span class="lineNum">      35 </span>            :     class QueryTreatment;
+<span class="lineNum">      36 </span>            :     
+<span class="lineNum">      37 </span>            :     /**
+<span class="lineNum">      38 </span>            :      * This class is a wrapper for DB calls in order to save the different
+<span class="lineNum">      39 </span>            :      * clauses and the resolutions that lead to them
+<span class="lineNum">      40 </span>            :      */
+<span class="lineNum">      41 </span>            :     class SATURNIN_EXPORT DBWrapper final {
+<span class="lineNum">      42 </span>            :     public:
+<span class="lineNum">      43 </span>            : 
+<span class="lineNum">      44 </span>            :         /**
+<span class="lineNum">      45 </span>            :          * Create a new DBWrapper object
+<span class="lineNum">      46 </span>            :          * @param aDBName the string necessary to retrieve access to the DB
+<span class="lineNum">      47 </span>            :          * @param verbose if set to true, logs will be produced
+<span class="lineNum">      48 </span>            :          */
+<span class="lineNum">      49 </span>            :         DBWrapper(const char* aDBName = nullptr, bool verbose = false);
+<span class="lineNum">      50 </span>            : 
+<span class="lineNum">      51 </span>            :         /** Destructor */
+<span class="lineNum">      52 </span>            :         ~DBWrapper();
+<span class="lineNum">      53 </span>            : 
+<span class="lineNum">      54 </span>            :         /**
+<span class="lineNum">      55 </span>            :          * Add a resolution
+<span class="lineNum">      56 </span>            :          * @param lits the array containing the literals of a clause used in the
+<span class="lineNum">      57 </span>            :          *             resolution
+<span class="lineNum">      58 </span>            :          * @param resolvent the integer ID of the resulting resolvent
+<span class="lineNum">      59 </span>            :          * @return true if the resolution was correctly added
+<span class="lineNum">      60 </span>            :          */
+<span class="lineNum">      61 </span>            :         bool addResolution(const Lit* const lits, long resolvent);
+<span class="lineNum">      62 </span>            :         
+<span class="lineNum">      63 </span>            :         /**
+<span class="lineNum">      64 </span>            :          * Store a clause in the DB engine
+<span class="lineNum">      65 </span>            :          * @param lits the literals of the clause to add in the DB Engine
+<span class="lineNum">      66 </span>            :          * @param id the identifier of the clause
+<span class="lineNum">      67 </span>            :          * @return true if the clause was successfuly added
+<span class="lineNum">      68 </span>            :          */
+<span class="lineNum">      69 </span>            :         bool addClause(const Lit* const lits, long id);
+<span class="lineNum">      70 </span>            : 
+<span class="lineNum">      71 </span>            :         /**
+<span class="lineNum">      72 </span>            :          * Sanatize the data: sort the different literals and make sure that
+<span class="lineNum">      73 </span>            :          * the different ids are stored and used
+<span class="lineNum">      74 </span>            :          */
+<span class="lineNum">      75 </span>            :         void sanatize();
+<span class="lineNum">      76 </span>            :         
+<span class="lineNum">      77 </span>            :         /**
+<span class="lineNum">      78 </span>            :          * Compute the height of each clause.
+<span class="lineNum">      79 </span>            :          * The height of a clause is 1+the maximum height of the clauses used in
+<span class="lineNum">      80 </span>            :          * a resolution to create that clause
+<span class="lineNum">      81 </span>            :          */
+<span class="lineNum">      82 </span>            :         void computeHeights();
+<span class="lineNum">      83 </span>            :         
+<span class="lineNum">      84 </span>            :         /**
+<span class="lineNum">      85 </span>            :          * Check that the different resolution that were added are valid
+<span class="lineNum">      86 </span>            :          * @return true if the resolutions are valid, false otherwise
+<span class="lineNum">      87 </span>            :          */
+<span class="lineNum">      88 </span>            :         bool checkResolutions();
+<span class="lineNum">      89 </span>            :         
+<span class="lineNum">      90 </span>            :         /**
+<span class="lineNum">      91 </span>            :          * Check that the given clause is contained in the database
+<span class="lineNum">      92 </span>            :          * @param c the clause that we want to check. Its representation is an
+<span class="lineNum">      93 </span>            :          *          array of Lit, ending with a Lit_Undef
+<span class="lineNum">      94 </span>            :          * @return true if the clause @a c is contained in the database
+<span class="lineNum">      95 </span>            :          */
+<span class="lineNum">      96 </span>            :         bool checkContainsClause(const Lit* const c);
+<span class="lineNum">      97 </span>            :         
+<span class="lineNum">      98 </span>            :         /**
+<span class="lineNum">      99 </span>            :          * Check whether the database has been initialized
+<a name="100"><span class="lineNum">     100 </span>            :          * @return true if a database has been initialized and therefore, used</a>
+<span class="lineNum">     101 </span>            :          */
+<span class="lineNum">     102 </span><span class="lineCov">     184090 :         bool isInitialized() const {</span>
+<span class="lineNum">     103 </span><span class="lineCov">     184090 :             return internalDBEngine != nullptr;</span>
+<span class="lineNum">     104 </span>            :         }
+<span class="lineNum">     105 </span>            :         
+<span class="lineNum">     106 </span>            :         /**
+<span class="lineNum">     107 </span>            :          * Retrieve the number of clauses that were added in this database
+<a name="108"><span class="lineNum">     108 </span>            :          * @return the number of clause in the database</a>
+<span class="lineNum">     109 </span>            :          */
+<span class="lineNum">     110 </span><span class="lineCov">     557345 :         long nbClausesAdded() const {</span>
+<span class="lineNum">     111 </span><span class="lineCov">     557345 :             return nbClauses;</span>
+<span class="lineNum">     112 </span>            :         }
+<span class="lineNum">     113 </span>            :         
+<span class="lineNum">     114 </span>            :         /**
+<span class="lineNum">     115 </span>            :          * Retrieve the memory footprint of this solver.
+<span class="lineNum">     116 </span>            :          * It will compute the memory footprint of every object used by this
+<span class="lineNum">     117 </span>            :          * solver
+<span class="lineNum">     118 </span>            :          * @return the memory footprint in bytes
+<span class="lineNum">     119 </span>            :          */
+<span class="lineNum">     120 </span>            :         size_t getMemoryFootprint() const;
+<span class="lineNum">     121 </span>            :         
+<span class="lineNum">     122 </span>            :     private:
+<span class="lineNum">     123 </span>            : 
+<span class="lineNum">     124 </span>            :         /**
+<span class="lineNum">     125 </span>            :          * Execute a given sql query
+<span class="lineNum">     126 </span>            :          * @param query the query to execute by the DB engine
+<span class="lineNum">     127 </span>            :          * @return true if the query was successful
+<span class="lineNum">     128 </span>            :          */
+<span class="lineNum">     129 </span>            :         bool executeQuery(const char* query);
+<span class="lineNum">     130 </span>            :         
+<span class="lineNum">     131 </span>            :         /**
+<span class="lineNum">     132 </span>            :          * Execute a given sql query and apply a given treatment to the results
+<span class="lineNum">     133 </span>            :          * @param query the query to execute by the DB engine
+<span class="lineNum">     134 </span>            :          * @param treat the object that will treat the results
+<span class="lineNum">     135 </span>            :          * @return true if the query was successful
+<span class="lineNum">     136 </span>            :          */
+<span class="lineNum">     137 </span>            :         bool executeQuery(const char* query, QueryTreatment* treat);
+<span class="lineNum">     138 </span>            :         
+<span class="lineNum">     139 </span>            :         /**
+<span class="lineNum">     140 </span>            :          * Creates the sorted string representation of a clause
+<span class="lineNum">     141 </span>            :          * @param clause a string representation of a clause
+<span class="lineNum">     142 </span>            :          * @return a string representation of a clause, with its literals sorted
+<span class="lineNum">     143 </span>            :          */
+<span class="lineNum">     144 </span>            :         std::string sortLiterals(const std::string&amp; clause) const;
+<span class="lineNum">     145 </span>            :         
+<span class="lineNum">     146 </span>            :         /** The pointer to the interal DB engine*/
+<span class="lineNum">     147 </span>            :         sqlite3* internalDBEngine;
+<span class="lineNum">     148 </span>            :         /** The number of clauses present in the DB */
+<span class="lineNum">     149 </span>            :         long nbClauses;
+<span class="lineNum">     150 </span>            :         /** If true, logs will be produced */
+<span class="lineNum">     151 </span>            :         bool produceLogs;
+<span class="lineNum">     152 </span>            : 
+<span class="lineNum">     153 </span>            :         //! @cond Doxygen_Suppress
+<span class="lineNum">     154 </span>            :         //private and non declared as it may not be used
+<span class="lineNum">     155 </span>            :         /** MAY NOT BE USED (private and not implemented) */
+<span class="lineNum">     156 </span>            :         DBWrapper&amp; operator=(const DBWrapper&amp;);
+<span class="lineNum">     157 </span>            : 
+<span class="lineNum">     158 </span>            :         /** MAY NOT BE USED (private and not implemented) */
+<span class="lineNum">     159 </span>            :         DBWrapper(const DBWrapper&amp;);
+<span class="lineNum">     160 </span>            :         //! @endcond
+<span class="lineNum">     161 </span>            : 
+<span class="lineNum">     162 </span>            :         
+<span class="lineNum">     163 </span>            :     };
+<span class="lineNum">     164 </span>            : 
+<span class="lineNum">     165 </span>            : }
+<span class="lineNum">     166 </span>            : 
+<span class="lineNum">     167 </span>            : #endif /* SATURNIN_DB */
+<span class="lineNum">     168 </span>            : #endif /* SATURNIN_DBWRAPPER_H */
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.10</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

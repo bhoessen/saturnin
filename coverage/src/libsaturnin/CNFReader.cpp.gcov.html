@@ -1,0 +1,287 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - saturnin-coverage.info.cleaned - src/libsaturnin/CNFReader.cpp</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">src/libsaturnin</a> - CNFReader.cpp<span style="font-size: 80%;"> (source / <a href="CNFReader.cpp.func.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">saturnin-coverage.info.cleaned</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">113</td>
+            <td class="headerCovTableEntry">116</td>
+            <td class="headerCovTableEntryHi">97.4 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2017-10-22</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">8</td>
+            <td class="headerCovTableEntry">8</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : #define _CRT_SECURE_NO_WARNINGS </a>
+<span class="lineNum">       2 </span>            : 
+<span class="lineNum">       3 </span>            : #include &quot;saturnin/CNFReader.h&quot;
+<span class="lineNum">       4 </span>            : #include &quot;saturnin/VariablesManager.h&quot;
+<span class="lineNum">       5 </span>            : #include &lt;errno.h&gt;
+<span class="lineNum">       6 </span>            : #include &lt;ctype.h&gt;
+<span class="lineNum">       7 </span>            : #include &lt;stdint.h&gt;
+<span class="lineNum">       8 </span>            : #include &lt;limits&gt;
+<span class="lineNum">       9 </span>            : 
+<span class="lineNum">      10 </span>            : #include &quot;./FileReader.h&quot;
+<span class="lineNum">      11 </span>            : #include &quot;../Utils.h&quot;
+<span class="lineNum">      12 </span>            : 
+<span class="lineNum">      13 </span>            : #define SAT_ABS(x) ((x)&gt;0?(x):-(x))
+<span class="lineNum">      14 </span>            : 
+<span class="lineNum">      15 </span>            : 
+<span class="lineNum">      16 </span>            : using namespace saturnin;
+<span class="lineNum">      17 </span>            : 
+<span class="lineNum">      18 </span>            : const char* cnfError_noError_str = &quot;No error&quot;;
+<span class="lineNum">      19 </span>            : const char* cnfError_noZeroEOL_str =
+<span class="lineNum">      20 </span>            :         &quot;There was no '0' at the end of a clause&quot;;
+<span class="lineNum">      21 </span>            : const char* cnfError_fileReading_str =
+<span class="lineNum">      22 </span>            :         &quot;There was a problem with the opening of the file&quot;;
+<span class="lineNum">      23 </span>            : const char* cnfError_noHeader_str =
+<span class="lineNum">      24 </span>            :         &quot;We didn't found the header of the file&quot;;
+<span class="lineNum">      25 </span>            : const char* cnfError_wrongHeader_str =
+<span class="lineNum">      26 </span>            :         &quot;The values inside the headers aren't legal &quot;
+<span class="lineNum">      27 </span>            :         &quot;(integer overflow or negative value)&quot;;
+<span class="lineNum">      28 </span>            : const char* cnfError_wrongLiteralValue_str =
+<span class="lineNum">      29 </span>            :         &quot;The number of variable doesn't match a variable declaration&quot;;
+<span class="lineNum">      30 </span>            : const char* cnfError_wrongNbClauses_str =
+<span class="lineNum">      31 </span>            :         &quot;The number of clauses present in the file doesn't match with the header&quot;;
+<a name="32"><span class="lineNum">      32 </span>            : const char* cnfError_unknwown = &quot;Unknown error&quot;;</a>
+<span class="lineNum">      33 </span>            : 
+<span class="lineNum">      34 </span><span class="lineCov">         11 : const char* CNFReader::getErrorString(CNFReader::CNFReaderErrors error) {</span>
+<span class="lineNum">      35 </span><span class="lineCov">         11 :     switch (error) {</span>
+<span class="lineNum">      36 </span><span class="lineCov">          4 :         case CNFReaderErrors::cnfError_noError: return cnfError_noError_str;</span>
+<span class="lineNum">      37 </span><span class="lineCov">          1 :         case CNFReaderErrors::cnfError_noZeroEOL: return cnfError_noZeroEOL_str;</span>
+<span class="lineNum">      38 </span><span class="lineCov">          1 :         case CNFReaderErrors::cnfError_fileReading: return cnfError_fileReading_str;</span>
+<span class="lineNum">      39 </span><span class="lineCov">          1 :         case CNFReaderErrors::cnfError_noHeader: return cnfError_noHeader_str;</span>
+<span class="lineNum">      40 </span><span class="lineCov">          1 :         case CNFReaderErrors::cnfError_wrongHeader: return cnfError_wrongHeader_str;</span>
+<span class="lineNum">      41 </span><span class="lineCov">          1 :         case CNFReaderErrors::cnfError_wrongLiteralValue: return cnfError_wrongLiteralValue_str;</span>
+<span class="lineNum">      42 </span><span class="lineCov">          1 :         case CNFReaderErrors::cnfError_wrongNbClauses: return cnfError_wrongNbClauses_str;</span>
+<span class="lineNum">      43 </span><span class="lineCov">          1 :         default: return cnfError_unknwown;</span>
+<span class="lineNum">      44 </span>            :     }
+<a name="45"><span class="lineNum">      45 </span>            : }</a>
+<span class="lineNum">      46 </span>            : 
+<span class="lineNum">      47 </span><span class="lineCov">         26 : CNFReader::CNFReader(const char* fileName) : inputFile(nullptr), clauses(256), </span>
+<span class="lineNum">      48 </span>            :         nbVar(0), memoryToRead(sizeof(FileReader)), presumptions(256), 
+<span class="lineNum">      49 </span><span class="lineCov">         26 :         lengthSum(0), maxLength(0) {</span>
+<span class="lineNum">      50 </span><span class="lineCov">         26 :     inputFile = fopen(fileName, &quot;r&quot;);</span>
+<a name="51"><span class="lineNum">      51 </span><span class="lineCov">         26 : }</span></a>
+<span class="lineNum">      52 </span>            : 
+<span class="lineNum">      53 </span><span class="lineCov">         52 : CNFReader::~CNFReader() {</span>
+<span class="lineNum">      54 </span><span class="lineCov">         26 :     if (inputFile != nullptr) {</span>
+<span class="lineNum">      55 </span><span class="lineCov">         24 :         fclose(inputFile);</span>
+<span class="lineNum">      56 </span>            :     }
+<a name="57"><span class="lineNum">      57 </span><span class="lineCov">         26 : }</span></a>
+<span class="lineNum">      58 </span>            : 
+<span class="lineNum">      59 </span><span class="lineCov">         25 : CNFReader::CNFReaderErrors CNFReader::read(unsigned int nbBlocks) {</span>
+<span class="lineNum">      60 </span><span class="lineCov">         25 :     if (inputFile == nullptr) {</span>
+<span class="lineNum">      61 </span><span class="lineCov">          1 :         return CNFReaderErrors::cnfError_fileReading;</span>
+<span class="lineNum">      62 </span>            :     }
+<span class="lineNum">      63 </span><span class="lineCov">         24 :     FileReader reader(inputFile, nbBlocks);</span>
+<span class="lineNum">      64 </span>            : 
+<span class="lineNum">      65 </span><span class="lineCov">         24 :     CNFReaderErrors error = CNFReaderErrors::cnfError_noError;</span>
+<span class="lineNum">      66 </span>            :     //Read comments and the header
+<span class="lineNum">      67 </span><span class="lineCov">         24 :     int64_t nbClauses = 0;</span>
+<span class="lineNum">      68 </span><span class="lineCov">         24 :     bool headerFound = false;</span>
+<span class="lineNum">      69 </span><span class="lineCov">         49 :     do {</span>
+<span class="lineNum">      70 </span>            :         const char* line;
+<span class="lineNum">      71 </span><span class="lineCov">         49 :         unsigned int lineLength = reader.getNextLine(line);</span>
+<span class="lineNum">      72 </span><span class="lineCov">         49 :         const char* endOfLine = line + lineLength;</span>
+<span class="lineNum">      73 </span><span class="lineCov">         49 :         if (lineLength &gt; 0 &amp;&amp; line[0] != 'c') {</span>
+<span class="lineNum">      74 </span>            :             //we need a 'p cnf' line
+<span class="lineNum">      75 </span><span class="lineCov">         23 :             if (lineLength &lt; 5 || strncmp(line, &quot;p cnf&quot;, 5) != 0) {</span>
+<span class="lineNum">      76 </span><span class="lineNoCov">          0 :                 error = CNFReaderErrors::cnfError_noHeader;</span>
+<span class="lineNum">      77 </span>            :             } else {
+<span class="lineNum">      78 </span><span class="lineCov">         23 :                 line += 5;</span>
+<span class="lineNum">      79 </span>            :                 const char* tmp;
+<span class="lineNum">      80 </span><span class="lineCov">         23 :                 int nbRead = 0;</span>
+<span class="lineNum">      81 </span><span class="lineCov">         23 :                 int64_t value = strntol(line, &amp;tmp, endOfLine - line, nbRead);</span>
+<span class="lineNum">      82 </span><span class="lineCov">         23 :                 if (value &lt; 0 || nbRead == 0 || (value == 0) || value &gt; static_cast&lt;int64_t&gt;(std::numeric_limits&lt;unsigned int&gt;::max())) {</span>
+<span class="lineNum">      83 </span><span class="lineCov">          1 :                     error = CNFReaderErrors::cnfError_wrongHeader;</span>
+<span class="lineNum">      84 </span>            :                 } else {
+<span class="lineNum">      85 </span><span class="lineCov">         22 :                     nbVar = (unsigned int) value;</span>
+<span class="lineNum">      86 </span>            :                 }
+<span class="lineNum">      87 </span>            : 
+<span class="lineNum">      88 </span><span class="lineCov">         23 :                 line = tmp;</span>
+<span class="lineNum">      89 </span><span class="lineCov">         23 :                 nbRead = 0;</span>
+<span class="lineNum">      90 </span><span class="lineCov">         23 :                 value = strntol(line, &amp;tmp, endOfLine - line, nbRead);</span>
+<span class="lineNum">      91 </span><span class="lineCov">         23 :                 if (value &lt; 0 || nbRead == 0 || (value == 0) || value &gt; (int64_t) std::numeric_limits&lt;unsigned int&gt;::max()) {</span>
+<span class="lineNum">      92 </span><span class="lineCov">          1 :                     error = CNFReaderErrors::cnfError_wrongHeader;</span>
+<span class="lineNum">      93 </span>            :                 } else {
+<span class="lineNum">      94 </span><span class="lineCov">         22 :                     nbClauses = value;</span>
+<span class="lineNum">      95 </span>            :                 }
+<span class="lineNum">      96 </span>            : 
+<span class="lineNum">      97 </span><span class="lineCov">         23 :                 headerFound = true;</span>
+<span class="lineNum">      98 </span>            : 
+<span class="lineNum">      99 </span>            :             }
+<span class="lineNum">     100 </span>            :         }
+<span class="lineNum">     101 </span><span class="lineCov">         49 :     } while (!headerFound &amp;&amp; error == CNFReaderErrors::cnfError_noError &amp;&amp; !reader.isEOF());</span>
+<span class="lineNum">     102 </span>            : 
+<span class="lineNum">     103 </span><span class="lineCov">         24 :     if (error != CNFReaderErrors::cnfError_noError) {</span>
+<span class="lineNum">     104 </span><span class="lineCov">          2 :         return error;</span>
+<span class="lineNum">     105 </span><span class="lineCov">         22 :     }else if (!headerFound){</span>
+<span class="lineNum">     106 </span><span class="lineCov">          1 :         return CNFReaderErrors::cnfError_noHeader;</span>
+<span class="lineNum">     107 </span>            :     }
+<span class="lineNum">     108 </span>            : 
+<span class="lineNum">     109 </span>            :     //create initial place for a clause of size 4 in order to 
+<span class="lineNum">     110 </span>            :     //reduce the total memory used
+<span class="lineNum">     111 </span><span class="lineCov">         42 :     Array&lt;Lit&gt; currentClause(4);</span>
+<span class="lineNum">     112 </span><span class="lineCov">     144566 :     do {</span>
+<span class="lineNum">     113 </span>            :         const char* line;
+<span class="lineNum">     114 </span><span class="lineCov">     144566 :         unsigned int lineLength = reader.getNextLine(line);</span>
+<span class="lineNum">     115 </span><span class="lineCov">     144566 :         const char* endOfLine = line + lineLength;</span>
+<span class="lineNum">     116 </span>            :         //make sure the next line isn't empty nor is a comment
+<span class="lineNum">     117 </span><span class="lineCov">     144566 :         if (lineLength &gt; 0 &amp;&amp; line[0] != 'c') {</span>
+<span class="lineNum">     118 </span><span class="lineCov">     142505 :             ASSERT(currentClause.getSize() == 0U);</span>
+<span class="lineNum">     119 </span><span class="lineCov">     142505 :             const char* end = line + lineLength;</span>
+<span class="lineNum">     120 </span><span class="lineCov">     142505 :             bool zeroFound = false;</span>
+<span class="lineNum">     121 </span><span class="lineCov">    1138294 :             while (error == CNFReaderErrors::cnfError_noError &amp;&amp; line &lt; end) {</span>
+<span class="lineNum">     122 </span>            :                 const char* tmp;
+<span class="lineNum">     123 </span><span class="lineCov">     853284 :                 int nbRead = 0;</span>
+<span class="lineNum">     124 </span><span class="lineCov">     853284 :                 int64_t value = strntol(line, &amp;tmp, endOfLine - line, nbRead);</span>
+<span class="lineNum">     125 </span><span class="lineCov">     853284 :                 if (SAT_ABS(value) &gt; (int64_t)std::numeric_limits&lt;unsigned int&gt;::max()) {</span>
+<span class="lineNum">     126 </span>            :                     //we avoid an integer overflow
+<span class="lineNum">     127 </span><span class="lineCov">          1 :                     error = CNFReaderErrors::cnfError_wrongLiteralValue;</span>
+<span class="lineNum">     128 </span><span class="lineCov">          1 :                     line = end;</span>
+<span class="lineNum">     129 </span><span class="lineCov">     853283 :                 } else if (nbRead == 0){</span>
+<span class="lineNum">     130 </span><span class="lineCov">          1 :                     line = end;</span>
+<span class="lineNum">     131 </span><span class="lineCov">     853282 :                 } else if (value == 0) {</span>
+<span class="lineNum">     132 </span><span class="lineCov">     142501 :                     zeroFound = true;</span>
+<span class="lineNum">     133 </span><span class="lineCov">     142501 :                     line = end;</span>
+<span class="lineNum">     134 </span>            :                 } else {
+<span class="lineNum">     135 </span><span class="lineCov">     710781 :                     bool sign = value &gt; 0 ? true : false;</span>
+<span class="lineNum">     136 </span><span class="lineCov">     710781 :                     Var v = static_cast&lt;Var&gt;(SAT_ABS(value) - 1);</span>
+<span class="lineNum">     137 </span><span class="lineCov">     710781 :                     if (v &gt; nbVar) {</span>
+<span class="lineNum">     138 </span><span class="lineCov">          1 :                         error = CNFReaderErrors::cnfError_wrongLiteralValue;</span>
+<span class="lineNum">     139 </span>            :                     } else {
+<span class="lineNum">     140 </span><span class="lineCov">     710780 :                         Lit a = VariablesManager::getLit(v, sign);</span>
+<span class="lineNum">     141 </span><span class="lineCov">     710780 :                         currentClause.push(a);</span>
+<span class="lineNum">     142 </span>            :                     }
+<span class="lineNum">     143 </span><span class="lineCov">     710781 :                     line = tmp;</span>
+<span class="lineNum">     144 </span>            :                 }
+<span class="lineNum">     145 </span>            :             }
+<span class="lineNum">     146 </span><span class="lineCov">     142505 :             if (currentClause.getSize() &gt; 0) {</span>
+<span class="lineNum">     147 </span><span class="lineCov">     142503 :                 if (!zeroFound) {</span>
+<span class="lineNum">     148 </span><span class="lineCov">          2 :                     error = CNFReaderErrors::cnfError_noZeroEOL;</span>
+<span class="lineNum">     149 </span>            :                 }
+<span class="lineNum">     150 </span><span class="lineCov">     142503 :                 if (error == CNFReaderErrors::cnfError_noError) {</span>
+<span class="lineNum">     151 </span><span class="lineCov">     142501 :                     unsigned int size = currentClause.getSize();</span>
+<span class="lineNum">     152 </span><span class="lineCov">     142501 :                     clauses.push(std::move(currentClause));</span>
+<span class="lineNum">     153 </span><span class="lineCov">     142501 :                     lengthSum += size;</span>
+<span class="lineNum">     154 </span><span class="lineCov">     142501 :                     if(size &gt; maxLength) {</span>
+<span class="lineNum">     155 </span><span class="lineCov">         46 :                         maxLength = size;</span>
+<span class="lineNum">     156 </span>            :                     }
+<span class="lineNum">     157 </span>            :                 }
+<span class="lineNum">     158 </span><span class="lineCov">     142505 :             }</span>
+<span class="lineNum">     159 </span><span class="lineCov">       2061 :         }else if (lineLength &gt; 2 &amp;&amp; line[0] == 'c' &amp;&amp; line[1] == 'p') {</span>
+<span class="lineNum">     160 </span><span class="lineCov">          1 :             line += 2;</span>
+<span class="lineNum">     161 </span>            :             const char * tmp;
+<span class="lineNum">     162 </span><span class="lineCov">          1 :             int nbRead = 0;</span>
+<span class="lineNum">     163 </span><span class="lineCov">          1 :             int64_t value = strntol(line, &amp;tmp, endOfLine - line, nbRead);</span>
+<span class="lineNum">     164 </span><span class="lineCov">          1 :             if (SAT_ABS(value) &gt; (int64_t) std::numeric_limits&lt;unsigned int&gt;::max()) {</span>
+<span class="lineNum">     165 </span>            :                 //we avoid an integer overflow
+<span class="lineNum">     166 </span><span class="lineNoCov">          0 :                 error = CNFReaderErrors::cnfError_wrongLiteralValue;</span>
+<span class="lineNum">     167 </span><span class="lineCov">          1 :             } else if (nbRead != 0 &amp;&amp; value != 0) {</span>
+<span class="lineNum">     168 </span>            :                 {
+<span class="lineNum">     169 </span><span class="lineCov">          1 :                     bool sign = value &gt; 0 ? true : false;</span>
+<span class="lineNum">     170 </span><span class="lineCov">          1 :                     Var v = static_cast&lt;Var&gt;(SAT_ABS(value) - 1);</span>
+<span class="lineNum">     171 </span><span class="lineCov">          1 :                     if (v &gt; nbVar) {</span>
+<span class="lineNum">     172 </span><span class="lineNoCov">          0 :                         error = CNFReaderErrors::cnfError_wrongLiteralValue;</span>
+<span class="lineNum">     173 </span>            :                     } else {
+<span class="lineNum">     174 </span><span class="lineCov">          1 :                         Lit a = VariablesManager::getLit(v, sign);</span>
+<span class="lineNum">     175 </span><span class="lineCov">          1 :                         presumptions.push(a);</span>
+<span class="lineNum">     176 </span>            :                     }
+<span class="lineNum">     177 </span><span class="lineCov">          1 :                     line = tmp;</span>
+<span class="lineNum">     178 </span>            :                 }
+<span class="lineNum">     179 </span>            :             }
+<span class="lineNum">     180 </span>            :         }
+<span class="lineNum">     181 </span><span class="lineCov">     144566 :     } while (error == CNFReaderErrors::cnfError_noError &amp;&amp; !reader.isEOF());</span>
+<span class="lineNum">     182 </span>            :     
+<span class="lineNum">     183 </span><span class="lineCov">         21 :     memoryToRead += reader.getMemoryFootprint();</span>
+<span class="lineNum">     184 </span>            : 
+<span class="lineNum">     185 </span><span class="lineCov">         21 :     if (error == CNFReaderErrors::cnfError_noError &amp;&amp; nbClauses != (long) clauses.getSize()) {</span>
+<span class="lineNum">     186 </span><span class="lineCov">          1 :         return CNFReaderErrors::cnfError_wrongNbClauses;</span>
+<span class="lineNum">     187 </span>            :     }
+<span class="lineNum">     188 </span>            : 
+<span class="lineNum">     189 </span><span class="lineCov">         44 :     return error;</span>
+<a name="190"><span class="lineNum">     190 </span>            : }</a>
+<span class="lineNum">     191 </span>            : 
+<span class="lineNum">     192 </span><span class="lineCov">     100711 : unsigned int CNFReader::getNbClauses() const {</span>
+<span class="lineNum">     193 </span><span class="lineCov">     100711 :     return clauses.getSize();</span>
+<a name="194"><span class="lineNum">     194 </span>            : }</a>
+<span class="lineNum">     195 </span>            : 
+<span class="lineNum">     196 </span><span class="lineCov">       3264 : unsigned int CNFReader::getNbVar() const {</span>
+<span class="lineNum">     197 </span><span class="lineCov">       3264 :     return nbVar;</span>
+<a name="198"><span class="lineNum">     198 </span>            : }</a>
+<span class="lineNum">     199 </span>            : 
+<span class="lineNum">     200 </span><span class="lineCov">     195503 : const Array&lt;Lit&gt;&amp; CNFReader::getClause(unsigned int i) const {</span>
+<span class="lineNum">     201 </span><span class="lineCov">     195503 :     ASSERT(i &lt; clauses.getSize());</span>
+<span class="lineNum">     202 </span><span class="lineCov">     195551 :     return ((const Array&lt;Lit&gt;*)clauses)[i];</span>
+<a name="203"><span class="lineNum">     203 </span>            : }</a>
+<span class="lineNum">     204 </span>            : 
+<span class="lineNum">     205 </span><span class="lineCov">          1 : size_t CNFReader::getMemoryFootprint() const {</span>
+<span class="lineNum">     206 </span><span class="lineCov">          1 :     size_t mem = clauses.getMemoryFootprint() + memoryToRead;</span>
+<span class="lineNum">     207 </span><span class="lineCov">          2 :     for (unsigned int i = 0; i &lt; clauses.getSize(); i++) {</span>
+<span class="lineNum">     208 </span><span class="lineCov">          1 :         mem += clauses[i].getMemoryFootprint();</span>
+<span class="lineNum">     209 </span>            :     }
+<span class="lineNum">     210 </span><span class="lineCov">          1 :     return mem;</span>
+<span class="lineNum">     211 </span>            : }
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.10</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

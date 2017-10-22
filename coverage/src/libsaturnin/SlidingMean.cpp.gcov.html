@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - saturnin-coverage.info.cleaned - src/libsaturnin/SlidingMean.cpp</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">src/libsaturnin</a> - SlidingMean.cpp<span style="font-size: 80%;"> (source / <a href="SlidingMean.cpp.func.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">saturnin-coverage.info.cleaned</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">25</td>
+            <td class="headerCovTableEntry">25</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2017-10-22</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">4</td>
+            <td class="headerCovTableEntry">4</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : #include &quot;saturnin/SlidingMean.h&quot;</a>
+<span class="lineNum">       2 </span>            : #include &lt;stddef.h&gt;
+<span class="lineNum">       3 </span>            : 
+<a name="4"><span class="lineNum">       4 </span>            : using namespace saturnin;</a>
+<span class="lineNum">       5 </span>            : 
+<span class="lineNum">       6 </span><span class="lineCov">        153 : SlidingMean::SlidingMean(unsigned int maxV) : array(nullptr), cap(maxV), size(0), pos(0), sum(0.0) {</span>
+<span class="lineNum">       7 </span><span class="lineCov">        153 :     array = new double[cap];</span>
+<span class="lineNum">       8 </span>            : #ifdef DEBUG
+<span class="lineNum">       9 </span><span class="lineCov">     245279 :     for (unsigned int i = 0; i &lt; cap; i++) {</span>
+<span class="lineNum">      10 </span><span class="lineCov">     245125 :         array[i] = 0.0;</span>
+<span class="lineNum">      11 </span>            :     }
+<span class="lineNum">      12 </span>            : #endif
+<a name="13"><span class="lineNum">      13 </span><span class="lineCov">        154 : }</span></a>
+<span class="lineNum">      14 </span>            : 
+<span class="lineNum">      15 </span><span class="lineCov">          1 : SlidingMean::SlidingMean(const SlidingMean&amp; source) : array(nullptr), cap(source.cap), size(source.size), pos(source.pos), sum(source.sum) {</span>
+<span class="lineNum">      16 </span><span class="lineCov">          1 :     array = new double[cap];</span>
+<span class="lineNum">      17 </span><span class="lineCov">          6 :     for (unsigned int i = 0; i &lt; cap; i++) {</span>
+<span class="lineNum">      18 </span><span class="lineCov">          5 :         array[i] = source.array[i];</span>
+<span class="lineNum">      19 </span>            :     }
+<a name="20"><span class="lineNum">      20 </span><span class="lineCov">          1 : }</span></a>
+<span class="lineNum">      21 </span>            : 
+<span class="lineNum">      22 </span><span class="lineCov">          1 : SlidingMean&amp; SlidingMean::operator=(const SlidingMean&amp; source) {</span>
+<span class="lineNum">      23 </span><span class="lineCov">          1 :     if (array != nullptr) {</span>
+<span class="lineNum">      24 </span><span class="lineCov">          1 :         delete[](array);</span>
+<span class="lineNum">      25 </span>            :     }
+<span class="lineNum">      26 </span><span class="lineCov">          1 :     cap = source.cap;</span>
+<span class="lineNum">      27 </span><span class="lineCov">          1 :     size = source.size;</span>
+<span class="lineNum">      28 </span><span class="lineCov">          1 :     pos = source.pos;</span>
+<span class="lineNum">      29 </span><span class="lineCov">          1 :     sum = source.sum;</span>
+<span class="lineNum">      30 </span><span class="lineCov">          1 :     array = new double[cap];</span>
+<span class="lineNum">      31 </span><span class="lineCov">          6 :     for (unsigned int i = 0; i &lt; cap; i++) {</span>
+<span class="lineNum">      32 </span><span class="lineCov">          5 :         array[i] = source.array[i];</span>
+<span class="lineNum">      33 </span>            :     }
+<span class="lineNum">      34 </span><span class="lineCov">          1 :     return *this;</span>
+<a name="35"><span class="lineNum">      35 </span>            : }</a>
+<span class="lineNum">      36 </span>            : 
+<span class="lineNum">      37 </span><span class="lineCov">        155 : SlidingMean::~SlidingMean() {</span>
+<span class="lineNum">      38 </span><span class="lineCov">        155 :     delete[](array);</span>
+<span class="lineNum">      39 </span><span class="lineCov">        155 :     array = nullptr;</span>
+<span class="lineNum">      40 </span><span class="lineCov">        155 : }</span>
+<span class="lineNum">      41 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.10</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

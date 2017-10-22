@@ -1,0 +1,176 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - saturnin-coverage.info.cleaned - src/libsaturnin/FileReader.h</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">src/libsaturnin</a> - FileReader.h<span style="font-size: 80%;"> (source / <a href="FileReader.h.func.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">saturnin-coverage.info.cleaned</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2017-10-22</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /*</a>
+<span class="lineNum">       2 </span>            : Copyright (c) &lt;2012&gt; &lt;B.Hoessen&gt;
+<span class="lineNum">       3 </span>            : 
+<span class="lineNum">       4 </span>            : This file is part of saturnin.
+<span class="lineNum">       5 </span>            : 
+<span class="lineNum">       6 </span>            : saturnin is free software: you can redistribute it and/or modify
+<span class="lineNum">       7 </span>            : it under the terms of the GNU General Public License as published by
+<span class="lineNum">       8 </span>            : the Free Software Foundation, either version 3 of the License, or
+<span class="lineNum">       9 </span>            : any later version.
+<span class="lineNum">      10 </span>            : 
+<span class="lineNum">      11 </span>            : saturnin is distributed in the hope that it will be useful,
+<span class="lineNum">      12 </span>            : but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      13 </span>            : MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      14 </span>            : GNU General Public License for more details.
+<span class="lineNum">      15 </span>            : 
+<span class="lineNum">      16 </span>            : You should have received a copy of the GNU General Public License
+<span class="lineNum">      17 </span>            : along with saturnin.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+<span class="lineNum">      18 </span>            :  */
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : #ifndef SATURNIN_FILEREADER_H
+<span class="lineNum">      21 </span>            : #define SATURNIN_FILEREADER_H
+<span class="lineNum">      22 </span>            : 
+<span class="lineNum">      23 </span>            : #include &lt;stdio.h&gt;
+<span class="lineNum">      24 </span>            : 
+<span class="lineNum">      25 </span>            : namespace saturnin {
+<span class="lineNum">      26 </span>            : 
+<span class="lineNum">      27 </span>            :     /**
+<span class="lineNum">      28 </span>            :      * This class will help reading of a file by reading a big chunk of the file
+<span class="lineNum">      29 </span>            :      * and after that, we may retrieve it line by line
+<span class="lineNum">      30 </span>            :      * Internally, in order to try to read not too slowly, we will try to read
+<span class="lineNum">      31 </span>            :      * the file not line by line but through a multiple of block size at a time.
+<span class="lineNum">      32 </span>            :      * On linux, we will check the size of the block at runtime. On other, we
+<span class="lineNum">      33 </span>            :      * will just assume a block size is 4096 bytes. 
+<span class="lineNum">      34 </span>            :      */
+<span class="lineNum">      35 </span>            :     class FileReader {
+<span class="lineNum">      36 </span>            :     public:
+<span class="lineNum">      37 </span>            :         /**
+<span class="lineNum">      38 </span>            :          * Creates a new file reader
+<span class="lineNum">      39 </span>            :          * @param f the file to read
+<span class="lineNum">      40 </span>            :          * @param nbBlocks the number of blocks that will be read at the same
+<span class="lineNum">      41 </span>            :          *        time 
+<span class="lineNum">      42 </span>            :          */
+<span class="lineNum">      43 </span>            :         FileReader(FILE* f, unsigned int nbBlocks = 256);
+<span class="lineNum">      44 </span>            : 
+<span class="lineNum">      45 </span>            :         /**
+<span class="lineNum">      46 </span>            :          * Destructor
+<span class="lineNum">      47 </span>            :          */
+<span class="lineNum">      48 </span>            :         ~FileReader();
+<span class="lineNum">      49 </span>            : 
+<span class="lineNum">      50 </span>            :         /**
+<span class="lineNum">      51 </span>            :          * Retrieve the current line where we have removed the trailing \n
+<span class="lineNum">      52 </span>            :          * @param destination the reference to the line
+<span class="lineNum">      53 </span>            :          * @return the length of the line
+<span class="lineNum">      54 </span>            :          */
+<span class="lineNum">      55 </span>            :         unsigned int getNextLine(const char*&amp; destination);
+<span class="lineNum">      56 </span>            : 
+<span class="lineNum">      57 </span>            :         /**
+<span class="lineNum">      58 </span>            :          * Check if we have read the whole file
+<span class="lineNum">      59 </span>            :          * @return true if the whole file was read, false otherwise
+<span class="lineNum">      60 </span>            :          */
+<a name="61"><span class="lineNum">      61 </span>            :         bool isEOF();</a>
+<span class="lineNum">      62 </span>            :         
+<span class="lineNum">      63 </span><span class="lineCov">         21 :         inline size_t getMemoryFootprint() const{</span>
+<span class="lineNum">      64 </span><span class="lineCov">         21 :             return bufSize * sizeof(char);</span>
+<span class="lineNum">      65 </span>            :         }
+<span class="lineNum">      66 </span>            : 
+<span class="lineNum">      67 </span>            :     private:
+<span class="lineNum">      68 </span>            : 
+<span class="lineNum">      69 </span>            :         /**
+<span class="lineNum">      70 </span>            :          * Retrieve the current line where we have removed the trailing '\n'
+<span class="lineNum">      71 </span>            :          * @param destination the reference to the line
+<span class="lineNum">      72 </span>            :          * @param checked the position at which we now that the '\n' character
+<span class="lineNum">      73 </span>            :          *        isn't before
+<span class="lineNum">      74 </span>            :          * @return the length of the line
+<span class="lineNum">      75 </span>            :          */
+<span class="lineNum">      76 </span>            :         unsigned int getNextLine(const char*&amp; destination, unsigned int checked);
+<span class="lineNum">      77 </span>            :         
+<span class="lineNum">      78 </span>            :         //not implemented
+<span class="lineNum">      79 </span>            :         FileReader(const FileReader&amp; source);
+<span class="lineNum">      80 </span>            :         FileReader&amp; operator=(const FileReader&amp; source);
+<span class="lineNum">      81 </span>            : 
+<span class="lineNum">      82 </span>            :         /** The pointer to the file we are reading */
+<span class="lineNum">      83 </span>            :         FILE* currentFile;
+<span class="lineNum">      84 </span>            :         /** The size of the buffer */
+<span class="lineNum">      85 </span>            :         unsigned int bufSize;
+<span class="lineNum">      86 </span>            :         /** The current buffer */
+<span class="lineNum">      87 </span>            :         char* buf;
+<span class="lineNum">      88 </span>            :         /** The pointer to the beginning of the next line */
+<span class="lineNum">      89 </span>            :         unsigned int next;
+<span class="lineNum">      90 </span>            :         /** The number of elements read present in buf */
+<span class="lineNum">      91 </span>            :         unsigned int length;
+<span class="lineNum">      92 </span>            :         /** If true, we read the whole file */
+<span class="lineNum">      93 </span>            :         bool iseof;
+<span class="lineNum">      94 </span>            : 
+<span class="lineNum">      95 </span>            :     };
+<span class="lineNum">      96 </span>            : 
+<span class="lineNum">      97 </span>            : }
+<span class="lineNum">      98 </span>            : 
+<span class="lineNum">      99 </span>            : #endif  /* SATURNIN_FILEREADER_H */
+<span class="lineNum">     100 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.10</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - saturnin-coverage.info.cleaned - src/libsaturnin/Simplifier.cpp</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">src/libsaturnin</a> - Simplifier.cpp<span style="font-size: 80%;"> (source / <a href="Simplifier.cpp.func.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">saturnin-coverage.info.cleaned</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">59</td>
+            <td class="headerCovTableEntry">61</td>
+            <td class="headerCovTableEntryHi">96.7 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2017-10-22</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">3</td>
+            <td class="headerCovTableEntry">3</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : #include &quot;saturnin/Simplifier.h&quot;</a>
+<span class="lineNum">       2 </span>            : #include &quot;saturnin/Assert.h&quot;
+<span class="lineNum">       3 </span>            : #include &quot;saturnin/Clause.h&quot;
+<span class="lineNum">       4 </span>            : 
+<a name="5"><span class="lineNum">       5 </span>            : using namespace saturnin;</a>
+<span class="lineNum">       6 </span>            : 
+<span class="lineNum">       7 </span><span class="lineCov">          3 : Simplifier::Simplifier(unsigned int nbVar, unsigned int nbClauses) : s(nbVar, nbClauses), nbClausesReduced(0U) {</span>
+<span class="lineNum">       8 </span>            : 
+<a name="9"><span class="lineNum">       9 </span><span class="lineCov">          3 : }</span></a>
+<span class="lineNum">      10 </span>            : 
+<span class="lineNum">      11 </span><span class="lineCov">          3 : Simplifier::~Simplifier() {</span>
+<a name="12"><span class="lineNum">      12 </span><span class="lineCov">          3 : }</span></a>
+<span class="lineNum">      13 </span>            : 
+<span class="lineNum">      14 </span><span class="lineCov">          2 : void Simplifier::revival(unsigned int min) {</span>
+<span class="lineNum">      15 </span><span class="lineCov">       1214 :     for (unsigned int i = 0; s.state == wUnknown &amp;&amp; i &lt; s.clauses.getSize(); i++) {</span>
+<span class="lineNum">      16 </span><span class="lineCov">       1212 :         Clause* c = s.clauses.get(i);</span>
+<span class="lineNum">      17 </span><span class="lineCov">       1212 :         s.stopWatchClause(c-&gt;getLit(0), c);</span>
+<span class="lineNum">      18 </span><span class="lineCov">       1212 :         s.stopWatchClause(c-&gt;getLit(1), c);</span>
+<span class="lineNum">      19 </span><span class="lineCov">       1212 :         if (c-&gt;getSize() &gt;= min) {</span>
+<span class="lineNum">      20 </span><span class="lineCov">       1212 :             bool stop = false;</span>
+<span class="lineNum">      21 </span><span class="lineCov">       1212 :             bool removeClause = false;</span>
+<span class="lineNum">      22 </span><span class="lineCov">       1212 :             Array&lt;Lit&gt; simplified;</span>
+<span class="lineNum">      23 </span><span class="lineCov">       4727 :             for (unsigned int j = 0; !stop &amp;&amp; j &lt; c-&gt;getSize(); j++) {</span>
+<span class="lineNum">      24 </span><span class="lineCov">       3515 :                 Lit l = c-&gt;getLit(j);</span>
+<span class="lineNum">      25 </span><span class="lineCov">       3515 :                 Var v = VariablesManager::getVar(l);</span>
+<span class="lineNum">      26 </span><span class="lineCov">       3515 :                 if (s.assign[v] != wUnknown) {</span>
+<span class="lineNum">      27 </span><span class="lineCov">        265 :                     if (s.varLevel[v] == 0) {</span>
+<span class="lineNum">      28 </span><span class="lineCov">        186 :                         if (s.assign[v] == (VariablesManager::getLitSign(l) ?</span>
+<span class="lineNum">      29 </span>            :                                 wTrue : wFalse)) {
+<span class="lineNum">      30 </span>            :                             //c can be removed
+<span class="lineNum">      31 </span><span class="lineCov">         61 :                             removeClause = true;</span>
+<span class="lineNum">      32 </span><span class="lineCov">         61 :                             stop = true;</span>
+<span class="lineNum">      33 </span>            :                         } else {
+<span class="lineNum">      34 </span>            :                             //l can be removed from c as it has been proven false
+<span class="lineNum">      35 </span>            :                         }
+<span class="lineNum">      36 </span>            :                     } else {
+<span class="lineNum">      37 </span><span class="lineCov">         79 :                         if (s.assign[v] == (VariablesManager::getLitSign(l) ?</span>
+<span class="lineNum">      38 </span>            :                                 wTrue : wFalse)) {
+<span class="lineNum">      39 </span>            :                             //let -l_1, -l_2, ..., -l_a the literals from c that
+<span class="lineNum">      40 </span>            :                             //lead to the assignation of l, we can replace c by
+<span class="lineNum">      41 </span>            :                             //l_1, l_2, ..., l_a, l
+<span class="lineNum">      42 </span><span class="lineCov">         17 :                             simplified.push(l);</span>
+<span class="lineNum">      43 </span><span class="lineCov">         17 :                             stop = true;</span>
+<span class="lineNum">      44 </span>            :                         } else {
+<span class="lineNum">      45 </span>            :                             //we may safely remove l from c
+<span class="lineNum">      46 </span>            :                         }
+<span class="lineNum">      47 </span>            :                     }
+<span class="lineNum">      48 </span>            :                 } else {
+<span class="lineNum">      49 </span><span class="lineCov">       3250 :                     s.assignLevel++;</span>
+<span class="lineNum">      50 </span><span class="lineCov">       3250 :                     s.stackPointer.push(s.stack.getSize());</span>
+<span class="lineNum">      51 </span><span class="lineCov">       3250 :                     s.enqueue(VariablesManager::oppositeLit(l));</span>
+<span class="lineNum">      52 </span><span class="lineCov">       3250 :                     Lit* conflict = s.propagate();</span>
+<span class="lineNum">      53 </span><span class="lineCov">       3250 :                     if (conflict != nullptr) {</span>
+<span class="lineNum">      54 </span>            :                         //simplified subsumes c
+<span class="lineNum">      55 </span><span class="lineCov">         14 :                         stop = true;</span>
+<span class="lineNum">      56 </span>            :                         //generate the learnt clause. If it is smaller than
+<span class="lineNum">      57 </span>            :                         //simplified, we can use the learnt instead of simplified
+<span class="lineNum">      58 </span><span class="lineCov">         14 :                         Array&lt;Lit&gt; learnt(c-&gt;getSize());</span>
+<span class="lineNum">      59 </span><span class="lineCov">         14 :                         s.analyze(conflict, learnt);</span>
+<span class="lineNum">      60 </span><span class="lineCov">         14 :                         if (learnt.getSize() &lt; simplified.getSize()) {</span>
+<span class="lineNum">      61 </span><span class="lineNoCov">          0 :                             simplified.pop(simplified.getSize());</span>
+<span class="lineNum">      62 </span><span class="lineNoCov">          0 :                             simplified = std::move(learnt);</span>
+<span class="lineNum">      63 </span><span class="lineCov">         14 :                         }</span>
+<span class="lineNum">      64 </span>            :                     } else {
+<span class="lineNum">      65 </span><span class="lineCov">       3236 :                         simplified.push(l);</span>
+<span class="lineNum">      66 </span>            :                     }
+<span class="lineNum">      67 </span>            :                 }
+<span class="lineNum">      68 </span>            :             }
+<span class="lineNum">      69 </span><span class="lineCov">       1212 :             if (s.assignLevel &gt; 0) {</span>
+<span class="lineNum">      70 </span><span class="lineCov">       1159 :                 s.backtrack(s.assignLevel);</span>
+<span class="lineNum">      71 </span>            :             }
+<span class="lineNum">      72 </span><span class="lineCov">       1212 :             ASSERT_EQUAL(0U, s.assignLevel);</span>
+<span class="lineNum">      73 </span><span class="lineCov">       1212 :             if (!removeClause &amp;&amp; simplified.getSize() &lt; c-&gt;getSize()) {</span>
+<span class="lineNum">      74 </span><span class="lineCov">        201 :                 nbClausesReduced++;</span>
+<span class="lineNum">      75 </span><span class="lineCov">        201 :                 unsigned int clSz = s.clauses.getSize();</span>
+<span class="lineNum">      76 </span><span class="lineCov">        401 :                 bool added = simplified.getSize() &gt; 0 &amp;&amp;</span>
+<span class="lineNum">      77 </span><span class="lineCov">        200 :                         s.addClause((Lit*) simplified,</span>
+<span class="lineNum">      78 </span><span class="lineCov">        601 :                         simplified.getSize(), true);</span>
+<span class="lineNum">      79 </span><span class="lineCov">        201 :                 if (!added) {</span>
+<span class="lineNum">      80 </span><span class="lineCov">          2 :                     s.state = wFalse;</span>
+<span class="lineNum">      81 </span>            :                 }
+<span class="lineNum">      82 </span><span class="lineCov">        201 :                 s.clauses[i] = s.clauses.getLast();</span>
+<span class="lineNum">      83 </span><span class="lineCov">        201 :                 if (s.clauses.getSize() == clSz) {</span>
+<span class="lineNum">      84 </span><span class="lineCov">        200 :                     i--;</span>
+<span class="lineNum">      85 </span>            :                 }
+<span class="lineNum">      86 </span><span class="lineCov">        201 :                 s.clauses.pop();</span>
+<span class="lineNum">      87 </span><span class="lineCov">        201 :                 s.allocator.releaseClause(c);</span>
+<span class="lineNum">      88 </span><span class="lineCov">       1011 :             } else if (removeClause) {</span>
+<span class="lineNum">      89 </span><span class="lineCov">         61 :                 s.clauses[i] = s.clauses.getLast();</span>
+<span class="lineNum">      90 </span><span class="lineCov">         61 :                 s.clauses.pop();</span>
+<span class="lineNum">      91 </span><span class="lineCov">         61 :                 i--;</span>
+<span class="lineNum">      92 </span><span class="lineCov">         61 :                 s.allocator.releaseClause(c);</span>
+<span class="lineNum">      93 </span>            :             } else {
+<span class="lineNum">      94 </span><span class="lineCov">        950 :                 s.addWatchedClause(c);</span>
+<span class="lineNum">      95 </span><span class="lineCov">       1212 :             }</span>
+<span class="lineNum">      96 </span>            :         }
+<span class="lineNum">      97 </span>            :     }
+<span class="lineNum">      98 </span><span class="lineCov">          2 : }</span>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.10</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - saturnin-coverage.info.cleaned - src/libsaturnin/RandomGenerator.cpp</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">src/libsaturnin</a> - RandomGenerator.cpp<span style="font-size: 80%;"> (source / <a href="RandomGenerator.cpp.func.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">saturnin-coverage.info.cleaned</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">6</td>
+            <td class="headerCovTableEntry">6</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2017-10-22</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : #include &quot;saturnin/RandomGenerator.h&quot;</a>
+<span class="lineNum">       2 </span>            : 
+<span class="lineNum">       3 </span>            : using namespace saturnin;
+<span class="lineNum">       4 </span>            : 
+<span class="lineNum">       5 </span>            : unsigned char rndtable[256] = {232, 213, 105, 184, 18, 203, 127, 56, 42, 234,
+<span class="lineNum">       6 </span>            :     245, 108, 200, 90, 149, 209, 114, 235, 39, 190, 60, 76, 94, 253, 49, 159,
+<span class="lineNum">       7 </span>            :     206, 241, 177, 156, 72, 172, 120, 218, 87, 150, 81, 131, 254, 36, 136, 181,
+<span class="lineNum">       8 </span>            :     240, 170, 224, 163, 51, 145, 63, 75, 109, 68, 229, 242, 86, 151, 113, 236,
+<span class="lineNum">       9 </span>            :     154, 212, 233, 226, 195, 157, 201, 106, 199, 125, 132, 246, 95, 107, 208,
+<span class="lineNum">      10 </span>            :     192, 99, 228, 148, 183, 227, 220, 182, 98, 119, 189, 110, 80, 169, 139, 162,
+<span class="lineNum">      11 </span>            :     137, 178, 196, 128, 92, 239, 207, 168, 187, 118, 143, 171, 250, 144, 221,
+<span class="lineNum">      12 </span>            :     174, 247, 130, 146, 121, 225, 158, 165, 219, 175, 216, 230, 193, 124, 115,
+<span class="lineNum">      13 </span>            :     215, 251, 134, 222, 147, 166, 202, 140, 133, 188, 179, 211, 160, 248, 176,
+<span class="lineNum">      14 </span>            :     135, 197, 161, 244, 238, 204, 129, 198, 152, 186, 180, 194, 205, 164, 237,
+<span class="lineNum">      15 </span>            :     210, 223, 243, 255, 167, 217, 231, 252, 173, 249, 185, 34, 9, 12, 46, 41,
+<span class="lineNum">      16 </span>            :     40, 23, 50, 17, 4, 191, 214, 31, 30, 19, 22, 35, 69, 52, 45, 8, 13, 64, 67,
+<span class="lineNum">      17 </span>            :     5, 27, 55, 16, 73, 10, 0, 77, 65, 104, 78, 88, 38, 1, 21, 74, 70, 28, 96,
+<span class="lineNum">      18 </span>            :     44, 33, 58, 53, 7, 93, 14, 116, 2, 100, 85, 102, 138, 59, 111, 47, 97, 91,
+<span class="lineNum">      19 </span>            :     15, 62, 24, 3, 101, 26, 66, 57, 117, 43, 141, 82, 122, 20, 61, 54, 11, 37,
+<a name="20"><span class="lineNum">      20 </span>            :     79, 126, 155, 25, 83, 84, 103, 142, 153, 48, 6, 123, 112, 32, 89, 29, 71};</a>
+<span class="lineNum">      21 </span>            : 
+<span class="lineNum">      22 </span><span class="lineCov">         52 : RandomGenerator::RandomGenerator(unsigned int initialValue) : next((unsigned char) initialValue) {</span>
+<span class="lineNum">      23 </span>            : 
+<a name="24"><span class="lineNum">      24 </span><span class="lineCov">         52 : }</span></a>
+<span class="lineNum">      25 </span>            : 
+<span class="lineNum">      26 </span><span class="lineCov">        256 : unsigned char RandomGenerator::getNext() {</span>
+<span class="lineNum">      27 </span><span class="lineCov">        256 :     unsigned char v = rndtable[next];</span>
+<span class="lineNum">      28 </span><span class="lineCov">        256 :     next++;</span>
+<span class="lineNum">      29 </span><span class="lineCov">        256 :     return v;</span>
+<span class="lineNum">      30 </span>            : }
+<span class="lineNum">      31 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.10</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

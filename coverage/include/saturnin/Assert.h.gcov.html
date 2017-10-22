@@ -1,0 +1,212 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - saturnin-coverage.info.cleaned - include/saturnin/Assert.h</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">include/saturnin</a> - Assert.h<span style="font-size: 80%;"> (source / <a href="Assert.h.func.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">saturnin-coverage.info.cleaned</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">16</td>
+            <td class="headerCovTableEntry">18</td>
+            <td class="headerCovTableEntryMed">88.9 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2017-10-22</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">7</td>
+            <td class="headerCovTableEntry">7</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /*</a>
+<span class="lineNum">       2 </span>            : Copyright (c) &lt;2012&gt; &lt;B.Hoessen&gt;
+<span class="lineNum">       3 </span>            : 
+<span class="lineNum">       4 </span>            : This file is part of saturnin.
+<span class="lineNum">       5 </span>            : 
+<span class="lineNum">       6 </span>            : saturnin is free software: you can redistribute it and/or modify
+<span class="lineNum">       7 </span>            : it under the terms of the GNU General Public License as published by
+<span class="lineNum">       8 </span>            : the Free Software Foundation, either version 3 of the License, or
+<span class="lineNum">       9 </span>            : any later version.
+<span class="lineNum">      10 </span>            : 
+<span class="lineNum">      11 </span>            : saturnin is distributed in the hope that it will be useful,
+<span class="lineNum">      12 </span>            : but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class="lineNum">      13 </span>            : MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<span class="lineNum">      14 </span>            : GNU General Public License for more details.
+<span class="lineNum">      15 </span>            : 
+<span class="lineNum">      16 </span>            : You should have received a copy of the GNU General Public License
+<span class="lineNum">      17 </span>            : along with saturnin.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+<span class="lineNum">      18 </span>            : */
+<span class="lineNum">      19 </span>            : 
+<span class="lineNum">      20 </span>            : #ifndef SATURNIN_ASSERT_H
+<span class="lineNum">      21 </span>            : #define SATURNIN_ASSERT_H
+<span class="lineNum">      22 </span>            : 
+<span class="lineNum">      23 </span>            : #include &lt;cstdint&gt;
+<span class="lineNum">      24 </span>            : #include &quot;Saturnin.h&quot;
+<span class="lineNum">      25 </span>            : 
+<span class="lineNum">      26 </span>            : #ifdef DEBUG
+<span class="lineNum">      27 </span>            : 
+<span class="lineNum">      28 </span>            : #include &quot;Logger.h&quot;
+<span class="lineNum">      29 </span>            : 
+<span class="lineNum">      30 </span>            : #include &lt;assert.h&gt;
+<span class="lineNum">      31 </span>            : #include &lt;stdlib.h&gt;
+<span class="lineNum">      32 </span>            : 
+<span class="lineNum">      33 </span>            : #if defined _WIN32 || defined __CYGWIN__
+<span class="lineNum">      34 </span>            : 
+<span class="lineNum">      35 </span>            : #define SATURNIN_TRACE(logger) {}
+<span class="lineNum">      36 </span>            : 
+<span class="lineNum">      37 </span>            : #elif SUNSTUDIO
+<span class="lineNum">      38 </span>            : 
+<span class="lineNum">      39 </span>            : #define SATURNIN_TRACE(logger) {}
+<span class="lineNum">      40 </span>            : 
+<span class="lineNum">      41 </span>            : #else
+<span class="lineNum">      42 </span>            : #include &lt;execinfo.h&gt;
+<span class="lineNum">      43 </span>            : #include &lt;cxxabi.h&gt;
+<span class="lineNum">      44 </span>            : 
+<span class="lineNum">      45 </span>            : 
+<span class="lineNum">      46 </span>            : 
+<span class="lineNum">      47 </span>            : #include &quot;Logger.h&quot;
+<span class="lineNum">      48 </span>            : 
+<span class="lineNum">      49 </span>            : #define MAX_FRAMES 100
+<span class="lineNum">      50 </span>            : 
+<span class="lineNum">      51 </span>            : //Code for SATURNIN_TRACE obtained at:
+<span class="lineNum">      52 </span>            : //http://mykospark.net/2009/09/runtime-backtrace-in-c-with-name-demangling/
+<span class="lineNum">      53 </span>            : //In order to work, binaries must be compiled with the -rdynamic option
+<span class="lineNum">      54 </span>            : #define SATURNIN_TRACE(logger) {void* addresses[MAX_FRAMES];\
+<span class="lineNum">      55 </span>            :     int bt_size = backtrace(addresses, MAX_FRAMES);\
+<span class="lineNum">      56 </span>            :     char** symbols = backtrace_symbols(addresses, bt_size);\
+<span class="lineNum">      57 </span>            :     for (int x = 0; x &lt; bt_size; ++x) {\
+<span class="lineNum">      58 </span>            :         size_t dem_size;\
+<span class="lineNum">      59 </span>            :         int status;\
+<span class="lineNum">      60 </span>            :         char temp[512];\
+<span class="lineNum">      61 </span>            :         char* demangled;\
+<span class="lineNum">      62 </span>            :         if (1 == sscanf(symbols[x], &quot;%*[^(]%*[^_]%511[^)+]&quot;, temp)) {\
+<span class="lineNum">      63 </span>            :           if (nullptr != (demangled = abi::__cxa_demangle(temp, nullptr, &amp;dem_size, &amp;status))) {\
+<span class="lineNum">      64 </span>            :             logger &lt;&lt; &quot;#&quot; &lt;&lt; x &lt;&lt; &quot; &quot; &lt;&lt; demangled &lt;&lt; &quot;\n&quot;;\
+<span class="lineNum">      65 </span>            :             free(demangled);\
+<span class="lineNum">      66 </span>            :           }\
+<span class="lineNum">      67 </span>            :         }else if (1 == sscanf(symbols[x], &quot;%511s&quot;, temp)) {\
+<span class="lineNum">      68 </span>            :           logger &lt;&lt; &quot;#&quot; &lt;&lt; x &lt;&lt; &quot; &quot; &lt;&lt; temp &lt;&lt; &quot;\n&quot;;\
+<span class="lineNum">      69 </span>            :         }else {\
+<span class="lineNum">      70 </span>            :           logger &lt;&lt; &quot;#&quot; &lt;&lt; x &lt;&lt; &quot; &quot; &lt;&lt; symbols[x] &lt;&lt; &quot;\n&quot;;\
+<span class="lineNum">      71 </span>            :         }\
+<span class="lineNum">      72 </span>            :     }\
+<span class="lineNum">      73 </span>            :     free(symbols);\
+<span class="lineNum">      74 </span>            : }
+<span class="lineNum">      75 </span>            : #endif
+<span class="lineNum">      76 </span>            : 
+<span class="lineNum">      77 </span>            : namespace saturnin {
+<span class="lineNum">      78 </span>            : 
+<span class="lineNum">      79 </span>            :     SATURNIN_EXPORT void _saturnin_incNbAssert();
+<span class="lineNum">      80 </span>            :     SATURNIN_EXPORT uint64_t _saturnin_nbAssert();
+<a name="81"><span class="lineNum">      81 </span>            : </a>
+<span class="lineNum">      82 </span>            :     template&lt;typename T, typename B&gt;
+<span class="lineNum">      83 </span><span class="lineCov">  753626233 :     void checkEquality(const T&amp; expected, const T&amp; actual, const char* nameEx, const char* nameAct, const char* fileName, int lineNb, B&amp; out) {</span>
+<span class="lineNum">      84 </span><span class="lineCov">  753626233 :         _saturnin_incNbAssert();</span>
+<span class="lineNum">      85 </span><span class="lineCov">  753635294 :         if (expected != actual) {</span>
+<span class="lineNum">      86 </span><span class="lineCov">          1 :             out &lt;&lt; nameEx &lt;&lt; &quot; == &quot; &lt;&lt; nameAct &lt;&lt; &quot; is not respected\n&quot;;</span>
+<span class="lineNum">      87 </span><span class="lineCov">          1 :             out &lt;&lt; &quot;Expected: &quot; &lt;&lt; expected &lt;&lt; &quot;\n&quot;;</span>
+<span class="lineNum">      88 </span><span class="lineCov">          1 :             out &lt;&lt; &quot;Actual:   &quot; &lt;&lt; actual &lt;&lt; &quot;\n&quot;;</span>
+<span class="lineNum">      89 </span><span class="lineCov">          1 :             out &lt;&lt; &quot;In &quot; &lt;&lt; fileName &lt;&lt; &quot;:&quot; &lt;&lt; lineNb &lt;&lt; &quot;\n&quot;;</span>
+<span class="lineNum">      90 </span><span class="lineCov">          1 :             SATURNIN_TRACE(out);</span>
+<span class="lineNum">      91 </span><span class="lineNoCov">          0 :             assert((expected) == (actual));</span>
+<span class="lineNum">      92 </span>            :         }
+<span class="lineNum">      93 </span><span class="lineCov">  753635294 :     }</span>
+<a name="94"><span class="lineNum">      94 </span>            : </a>
+<span class="lineNum">      95 </span>            :     template&lt;typename B&gt;
+<span class="lineNum">      96 </span><span class="lineCov"> 3052819182 :     inline void checkTruth(bool condition, const char* nameCond, const char* fileName, int lineNb, B&amp; out) {</span>
+<span class="lineNum">      97 </span><span class="lineCov"> 3052819182 :         _saturnin_incNbAssert();</span>
+<span class="lineNum">      98 </span><span class="lineCov"> 3077059574 :         if (!(condition)) {</span>
+<span class="lineNum">      99 </span><span class="lineCov">          1 :             out &lt;&lt; nameCond &lt;&lt; &quot; is not respected\n&quot;;</span>
+<span class="lineNum">     100 </span><span class="lineCov">          1 :             out &lt;&lt; &quot;In &quot; &lt;&lt; fileName &lt;&lt; &quot;:&quot; &lt;&lt; lineNb &lt;&lt; &quot;\n&quot;;</span>
+<span class="lineNum">     101 </span><span class="lineCov">          1 :             SATURNIN_TRACE(out);</span>
+<span class="lineNum">     102 </span><span class="lineNoCov">          0 :             assert(condition);</span>
+<span class="lineNum">     103 </span>            :         }
+<span class="lineNum">     104 </span>            : 
+<span class="lineNum">     105 </span><span class="lineCov"> 3077059574 :     }</span>
+<span class="lineNum">     106 </span>            : }
+<span class="lineNum">     107 </span>            : 
+<span class="lineNum">     108 </span>            : 
+<span class="lineNum">     109 </span>            : #define ASSERT(condition) {saturnin::checkTruth(condition, #condition, __FILE__, __LINE__, saturnin::Logger::getStdErrLogger());}
+<span class="lineNum">     110 </span>            : 
+<span class="lineNum">     111 </span>            : #define ASSERT_EQUAL(expected, actual) {saturnin::checkEquality(expected, actual, #expected, #actual, __FILE__, __LINE__, saturnin::Logger::getStdErrLogger());}
+<span class="lineNum">     112 </span>            : 
+<span class="lineNum">     113 </span>            : #define SKIP { int __skip_tmp = 0; __skip_tmp++;}
+<span class="lineNum">     114 </span>            : 
+<span class="lineNum">     115 </span>            : #define NB_ASSERTED saturnin::_saturnin_nbAssert()
+<span class="lineNum">     116 </span>            : 
+<span class="lineNum">     117 </span>            : #else
+<span class="lineNum">     118 </span>            : 
+<span class="lineNum">     119 </span>            : namespace saturnin {
+<span class="lineNum">     120 </span>            : 
+<span class="lineNum">     121 </span>            :     template&lt;typename T, typename B&gt;
+<span class="lineNum">     122 </span>            :     void checkEquality(const T&amp;, const T&amp;, const char*, const char*, const char*, int, B&amp;) { }
+<span class="lineNum">     123 </span>            : 
+<span class="lineNum">     124 </span>            :     template&lt;typename B&gt;
+<span class="lineNum">     125 </span>            :     inline void checkTruth(bool , const char* , const char* , int , B&amp; ) { }
+<span class="lineNum">     126 </span>            : 
+<span class="lineNum">     127 </span>            : }
+<span class="lineNum">     128 </span>            : #define ASSERT(condition) {}
+<span class="lineNum">     129 </span>            : #define ASSERT_EQUAL(a, b) {}
+<span class="lineNum">     130 </span>            : #define SKIP {}
+<span class="lineNum">     131 </span>            : #define NB_ASSERTED 0
+<span class="lineNum">     132 </span>            : #define SATURNIN_TRACE(a) {}
+<span class="lineNum">     133 </span>            : #endif
+<span class="lineNum">     134 </span>            : 
+<span class="lineNum">     135 </span>            : #endif  /* SATURNIN_ASSERT_H */
+<span class="lineNum">     136 </span>            : 
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.10</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>
