@@ -18,7 +18,7 @@ script:
  - make doc
  - cp -R doc ../../../docs/
  - cd ../../gcc/Release
- - cmake ../../..
+ - cmake ../../.. -DCMAKE_BUILD_TYPE=Release
  - make
  - cd ../../..
  - cd build/gcc/Coverage
