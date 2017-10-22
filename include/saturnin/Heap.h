@@ -83,13 +83,8 @@ namespace saturnin {
             data(initialCapacity), positions(initialCapacity), comparator(c) {
         }
 
-        /**
-         * Copy constructor
-         * @param source the source of the copy
-         */
-        Heap(const Heap& source) :
-            data(source.data), positions(source.positions), comparator(source.comparator) {
-        }
+        //No copy constructor
+        Heap(const Heap& source) = delete;
         
         /**
          * Destructor

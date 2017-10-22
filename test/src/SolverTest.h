@@ -42,20 +42,12 @@ public:
     CPPUNIT_TEST(testCompleteUNSAT);
     CPPUNIT_TEST(testCompleteSAT);
     CPPUNIT_TEST(testdp10);
-    CPPUNIT_TEST(testMemoryUsage);
     CPPUNIT_TEST(testPhasedElimination);
     CPPUNIT_TEST(testBigInstance);
     CPPUNIT_TEST(testPresumedInstance);
     CPPUNIT_TEST(testDBChecks);
     CPPUNIT_TEST_SUITE_END();
 
-    /**
-     * check the memory consumption
-     * This should change whenever we change the size of the internal structures
-     * of elements used by the solver
-     */
-    void testMemoryUsage();
-    
     /**
      * Check that the DB save works
      */

@@ -286,12 +286,26 @@ namespace saturnin {
          */
         ~Clause();
 
+        //Deleted copy constructor
+        Clause(const Clause&) = delete;
+        //Deleted copy-assignment operator
+        Clause& operator=(const Clause&) = delete;
+
+        /** Compact structure for various values of the clause */
+        struct compact_t {
+            /** The literal block distance of the clause */
+            unsigned lbd : 16;
+            /** Allows to known if this clause have to be removed from the watches*/
+            unsigned toRemove : 4;
+            /** Allows to known if this clause is currently attached to the solver*/
+            unsigned attached : 4;
+            /** Represent the number of times a clause was frozen */
+            unsigned freezeCounter : 8;
+        };
+
     private:
 
         friend class PoolList;
-#ifdef EXTRA_FRIEND
-        friend class EXTRA_FRIEND;
-#endif
 
         /**
          * Creates a new Clause. Should only be called from PoolList
@@ -300,31 +314,12 @@ namespace saturnin {
          * @param lbd the literal block distance of the clause
          */
         Clause(const Lit * const literals, unsigned int sz, unsigned int lbd = 0);
-
-        //! @cond Doxygen_Suppress
-        //private and non declared as it may not be used
-        /** MAY NOT BE USED (private and not implemented) */
-        Clause(const Clause&);
-        /** MAY NOT BE USED (private and not implemented) */
-        Clause& operator=(const Clause&);
-        //! @endcond
-
+       
         /** The length of the clause */
         unsigned int size;
 
-        /** Compact structure for various values of the clause */
-        struct compact_t{
-            /** The literal block distance of the clause */
-            unsigned lbd           : 16;
-            /** Allows to known if this clause have to be removed from the watches*/
-            unsigned toRemove      :  4;
-            /** Allows to known if this clause is currently attached to the solver*/
-            unsigned attached      :  4;
-            /** Represent the number of times a clause was frozen */
-            unsigned freezeCounter :  8;
-        }
         /** The variable containing some data about the close in a compact way*/
-        compact;
+        compact_t compact;
         
         
         /** An index that can be used by the user of the clause */
@@ -348,6 +343,15 @@ namespace saturnin {
          * @param l the blocking literal
          */
         watcher_t(Clause* w, Lit l) : watched(w), block(l) {
+            ASSERT(watched != nullptr);
+            ASSERT(watched->contains(block));
+        }
+
+        /**
+         * Move constructor
+         * @param other the source of the copy
+         */
+        watcher_t(watcher_t&& other) : watched(other.watched), block(other.block) {
             ASSERT(watched != nullptr);
             ASSERT(watched->contains(block));
         }

@@ -299,9 +299,9 @@ void SolverTest::testSearchNoConflict() {
         CPPUNIT_ASSERT(wTrue == s.getVarValue(saturnin::VariablesManager::getVar(c)));
         CPPUNIT_ASSERT(wUnknown == s.getVarValue(saturnin::VariablesManager::getVar(d)));
 
-        CPPUNIT_ASSERT_EQUAL((unsigned long) 3, s.getNbPropagation());
-        CPPUNIT_ASSERT_EQUAL((unsigned long) 0, s.getNbConflict());
-        CPPUNIT_ASSERT_EQUAL((unsigned long) 0, s.getNbRestarts());
+        CPPUNIT_ASSERT_EQUAL((uint64_t) 3, s.getNbPropagation());
+        CPPUNIT_ASSERT_EQUAL((uint64_t) 0, s.getNbConflict());
+        CPPUNIT_ASSERT_EQUAL((uint64_t) 0, s.getNbRestarts());
         CPPUNIT_ASSERT(s.solve(1));
 
         CPPUNIT_ASSERT(s.validate());
@@ -342,7 +342,7 @@ void SolverTest::testSearchConflict() {
         CPPUNIT_ASSERT(solFound);
         CPPUNIT_ASSERT(s.getState() == wTrue);
 
-        CPPUNIT_ASSERT_EQUAL((unsigned long) 1, s.getNbConflict());
+        CPPUNIT_ASSERT_EQUAL((uint64_t) 1, s.getNbConflict());
 
         CPPUNIT_ASSERT(s.validate());
 
@@ -362,7 +362,7 @@ void SolverTest::testSearchConflict() {
         bool solFound = s.solve(1);
         CPPUNIT_ASSERT(solFound);
 
-        CPPUNIT_ASSERT_EQUAL((unsigned long) 0, s.getNbConflict());
+        CPPUNIT_ASSERT_EQUAL((uint64_t) 0, s.getNbConflict());
 
         CPPUNIT_ASSERT(s.validate());
 
@@ -734,7 +734,7 @@ void SolverTest::testSolveInstance(const char* fileName, saturnin::wbool result,
 
     saturnin::CNFReader::CNFReaderErrors error = reader->read();
 
-    if (error != saturnin::CNFReader::cnfError_noError) {
+    if (error != saturnin::CNFReader::CNFReaderErrors::cnfError_noError) {
         char buf[1024];
         snprintf(buf, 1024, "Error during file parsing: %s\n", saturnin::CNFReader::getErrorString(error));
         CPPUNIT_ASSERT_MESSAGE(buf, false);
@@ -811,7 +811,7 @@ void SolverTest::testPresumedInstance() {
 
     saturnin::CNFReader::CNFReaderErrors error = reader->read();
 
-    if (error != saturnin::CNFReader::cnfError_noError) {
+    if (error != saturnin::CNFReader::CNFReaderErrors::cnfError_noError) {
         char buf[1024];
         snprintf(buf, 1024, "Error during file parsing: %s\n", saturnin::CNFReader::getErrorString(error));
         CPPUNIT_ASSERT_MESSAGE(buf, false);
@@ -859,48 +859,4 @@ void SolverTest::testDBChecks() {
     saturnin::Logger::getDBLogger().setOutput(saturnin::Logger::getStdOutLogger().getOutput());
     CPPUNIT_ASSERT(valid);
     
-}
-
-void SolverTest::testMemoryUsage(){
-    saturnin::Solver p7(7, 127);
-    createOneSolutionProblem(p7, 7);
-    CPPUNIT_ASSERT_EQUAL(127U, p7.getNbClauses());
-
-    p7.setVerbosity(1);
-
-    {
-#if defined _WIN32 || defined __CYGWIN__
-        FILE* f = fopen("nul", "w+");
-#else
-        FILE* f = fopen("/dev/null", "w+");
-#endif
-        FILE* original = saturnin::Logger::getStdOutLogger().getOutput();
-        saturnin::Logger::getStdOutLogger().setOutput(f);
-        CPPUNIT_ASSERT(p7.solve(1));
-        saturnin::Logger::getStdOutLogger().setOutput(original);
-        fclose(f);
-    }
-    CPPUNIT_ASSERT(wTrue == p7.getState());
-    for (unsigned int i = 0; i < 7U; i++) {
-        CPPUNIT_ASSERT(wTrue == p7.getVarValue(i));
-    }
-    
-    size_t expected = sizeof(int) == sizeof(std::intptr_t) ? 35787 : 55563;
-    if (sizeof(long) == 8)
-        expected += 60;
-#ifdef SATURNIN_DB
-    expected += (sizeof(int) == sizeof(std::intptr_t) ? 12 : 24);
-#endif /* SATURNIN_DB */
-#ifdef PROFILE
-    expected += 216;
-#endif /* PROFILE */
-#ifdef SATURNIN_PARALLEL
-    expected += (sizeof(int) == sizeof(std::intptr_t) ? 20 : 40);
-#ifdef PROFILE
-    expected += 16;
-#endif /* PROFILE */
-#endif /* SATURNIN_PARALLEL */
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("Changes has been made to the memory model of the solver? If so, you may change the expected value.",
-       expected, sizeof(saturnin::Solver) + p7.getMemoryFootprint());
-
 }

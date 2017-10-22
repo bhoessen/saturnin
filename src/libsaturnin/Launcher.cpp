@@ -190,7 +190,7 @@ saturnin::Launcher::Launcher(int argc, char ** argv) : clean_exit(false), w(), r
     avgLenght = reader->getAverageLength();
     maxLenght = reader->getMaxLength();
 
-    if (error != CNFReader::cnfError_noError) {
+    if (error != CNFReader::CNFReaderErrors::cnfError_noError) {
         printf("Error during file parsing: %s\n", CNFReader::getErrorString(error));
         return;
     }
@@ -333,7 +333,7 @@ double saturnin::Launcher::getEllapsedTime() const {
     if (solver->getState() == wUnknown)
         return w.getIntermediate();
     else
-        return w.getSecondsEllapsed();
+        return static_cast<double>(w.getSecondsEllapsed());
 }
 
 void saturnin::Launcher::printStats(Solver & s) const {
@@ -349,17 +349,17 @@ void saturnin::Launcher::printStats(Solver & s) const {
         }
     }
 
-    printf("c Nb propagations:   %14ld (%.2f propagations/second)\n",
+    printf("c Nb propagations:   %14" PRIu64 " (%.2f propagations/second)\n",
         s.getNbPropagation(), s.getNbPropagation() / w.getTimeEllapsed());
-    printf("c Nb conflicts:      %14ld (%.2f conflicts/second)\n",
+    printf("c Nb conflicts:      %14" PRIu64 " (%.2f conflicts/second)\n",
         s.getNbConflict(), s.getNbConflict() / w.getTimeEllapsed());
-    printf("c Nb restarts:       %14ld\n", s.getNbRestarts());
+    printf("c Nb restarts:       %14" PRIu64 "\n", s.getNbRestarts());
     printf("c Nb reduce:         %14d\n", s.getNbReduce());
-    printf("c Clauses removed:   %14ld (initial: %ld, learnt: %ld)\n",
+    printf("c Clauses removed:   %14" PRIu64 " (initial: %" PRIu64 ", learnt: %" PRIu64 ")\n",
         s.getNbClausesRemoved() + s.getNbInitialClausesRemoved(),
         s.getNbInitialClausesRemoved(), s.getNbClausesRemoved());
-    printf("c Clauses simplified:%14ld\n", s.getNbInitialClausesReduced());
-    printf("c Nb pure literal:   %14ld\n", s.getNbPureLiteral());
+    printf("c Clauses simplified:%14" PRIu64 "\n", s.getNbInitialClausesReduced());
+    printf("c Nb pure literal:   %14" PRIu64 "\n", s.getNbPureLiteral());
 #ifdef SATURNIN_COUNT_ACCESS
     printf("c Array access:      %14ld\n", SATURNIN_NB_ARRAY_ACCESS);
     printf("c Nb asserts:        %14ld\n", NB_ASSERTED);

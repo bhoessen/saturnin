@@ -37,7 +37,7 @@ void ArrayTest::testPushResize(){
     }
     CPPUNIT_ASSERT_EQUAL(arrayCap, b.getCapacity());
     CPPUNIT_ASSERT_EQUAL(arrayCap, b.getSize());
-    b.push(b.get(0));
+    b.push(b.get(0).copy());
     CPPUNIT_ASSERT_EQUAL(b.get(0).getSize(), b.getLast().getSize());
 }
 
@@ -118,14 +118,14 @@ void ArrayTest::testCopy(){
         a.push(i);
     }
 
-    saturnin::Array<unsigned int> b(a);
+    saturnin::Array<unsigned int> b(a.copy());
     CPPUNIT_ASSERT_EQUAL(a.getSize(), b.getSize());
     for (unsigned int i = 0; i < a.getSize(); i++) {
         CPPUNIT_ASSERT_EQUAL(a.get(i), b.get(i));
     }
 
     saturnin::Array<unsigned int> c;
-    c = a;
+    c = a.copy();
     CPPUNIT_ASSERT_EQUAL(a.getSize(), c.getSize());
     for (unsigned int i = 0; i < a.getSize(); i++) {
         CPPUNIT_ASSERT_EQUAL(a.get(i), c.get(i));
@@ -166,10 +166,6 @@ void ArrayTest::testPointers(){
     for(unsigned int i=0; i<arrayCap; i++){
         CPPUNIT_ASSERT_EQUAL(i, a[i]->a);
     }
-    saturnin::Array<AnObject*> b(a);
-    CPPUNIT_ASSERT(a == b);
-    saturnin::Array<AnObject*> d(a);
-    CPPUNIT_ASSERT(d == a);
     for(unsigned int i=0; i<arrayCap; i++){
         delete(a.getLast());
         a.pop();
@@ -177,7 +173,27 @@ void ArrayTest::testPointers(){
     CPPUNIT_ASSERT_EQUAL(0U, a.getSize());
     
     AnObject tmp(2);
-    saturnin::Array<AnObject*> c{NULL, &tmp};
+    saturnin::Array<AnObject*> c{ nullptr, &tmp};
     CPPUNIT_ASSERT_EQUAL(2U, c.getSize());
 }
 
+void ArrayTest::testRange(){
+    AnObject tmp(2);
+    saturnin::Array<AnObject*> c{ nullptr, &tmp };
+    for (auto& e : c){
+        if (e != nullptr) {
+            e = nullptr;
+        }
+    }
+    const auto& cc = c;
+    for (auto& e : cc) {
+        CPPUNIT_ASSERT_EQUAL(e, static_cast<AnObject*>(nullptr));
+    }
+}
+
+void ArrayTest::testMemoryUsage() {
+    saturnin::Array<int> n(64);
+    CPPUNIT_ASSERT_EQUAL(64u, n.getCapacity());
+    CPPUNIT_ASSERT_EQUAL(size_t(8u) + sizeof(std::intptr_t), sizeof(n));
+    CPPUNIT_ASSERT_EQUAL(size_t(256u), n.getMemoryFootprint());
+}

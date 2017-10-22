@@ -33,7 +33,7 @@ double StopWatch::getIntermediate() const {
     return nbSec + (nbMilli / 1000.0);
 }
 
-int StopWatch::getSecondsEllapsed() {
+uint64_t StopWatch::getSecondsEllapsed() {
     if (milli > 0) {
         return sec + 1;
     } else {
@@ -41,7 +41,7 @@ int StopWatch::getSecondsEllapsed() {
     }
 }
 
-long StopWatch::getMilliEllapsed() {
+uint64_t StopWatch::getMilliEllapsed() {
     return sec * 1000 + milli;
 }
 

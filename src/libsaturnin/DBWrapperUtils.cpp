@@ -19,7 +19,11 @@ internalDBEngine(aDBEngine), preparedStatement(nullptr) {
         preparedStatement = nullptr;
         if (errorCode != SQLITE_OK) {
             fprintf(Logger::getDBLogger().getOutput(),
+#if SQLITE_VERSION_NUMBER > 3007016
                     "c [dblog] %s", sqlite3_errstr(errorCode));
+#else
+                    "c [dblog] %s", sqlite3_errmsg(internalDBEngine));
+#endif
         }
     }
 }
@@ -30,7 +34,11 @@ PreparedStatement::~PreparedStatement() {
     if (returnCode != SQLITE_OK) {
         fprintf(Logger::getDBLogger().getOutput(),
                 "c [dblog] Unable to finalize prepared statement: %s (errorcode: %d)\n",
+#if SQLITE_VERSION_NUMBER > 3007016
                 sqlite3_errstr(returnCode), returnCode);
+#else
+                sqlite3_errmsg(internalDBEngine), returnCode);
+#endif
     }
 }
 

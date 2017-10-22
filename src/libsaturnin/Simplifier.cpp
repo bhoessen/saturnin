@@ -59,7 +59,7 @@ void Simplifier::revival(unsigned int min) {
                         s.analyze(conflict, learnt);
                         if (learnt.getSize() < simplified.getSize()) {
                             simplified.pop(simplified.getSize());
-                            simplified = learnt;
+                            simplified = std::move(learnt);
                         }
                     } else {
                         simplified.push(l);

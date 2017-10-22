@@ -21,6 +21,7 @@ along with saturnin.  If not, see <http://www.gnu.org/licenses/>.
 #define	SATURNIN_STOPWATCH_H
 
 #include <sys/timeb.h>
+#include <cstdint>
 #include "Saturnin.h"
 
 namespace saturnin {
@@ -56,7 +57,7 @@ namespace saturnin {
          * Retrieve the number of seconds elapsed
          * @return the number of seconds
          */
-        int getSecondsEllapsed();
+        uint64_t getSecondsEllapsed();
 
         /**
          * Retrieve the time in seconds ellapsed since the start
@@ -68,11 +69,11 @@ namespace saturnin {
          * Retrieve the number of millisec elapsed
          * @return the number of millisec
          */
-        long getMilliEllapsed();
+        uint64_t getMilliEllapsed();
 
     private:
         struct timeb before, after;
-        long sec;
+        uint64_t sec;
         unsigned short milli;
 
     };

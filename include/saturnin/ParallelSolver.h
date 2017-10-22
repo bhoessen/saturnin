@@ -20,13 +20,14 @@ along with saturnin.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef SATURNIN_PARALLELSOLVER_H
 #define	SATURNIN_PARALLELSOLVER_H
 
-#ifdef SATURNIN_PARALLEL
-
-#include <atomic>
 #include "Array.h"
 #include "CNFReader.h"
 #include "Clause.h"
 #include "Saturnin.h"
+
+#ifdef SATURNIN_PARALLEL
+
+#include <atomic>
 
 namespace saturnin{
     

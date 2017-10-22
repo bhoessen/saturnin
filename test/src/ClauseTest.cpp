@@ -1,4 +1,3 @@
-#define EXTRA_FRIEND ::ClauseTest
 #include "ClauseTest.h"
 #include "../../include/saturnin/Clause.h"
 #include "../../include/saturnin/PoolList.h"
@@ -13,19 +12,17 @@ void ClauseTest::testCreation(){
     }
     saturnin::PoolList p(sz,2);
     saturnin::Clause* cl = p.createClause(c,sz,3);
-    p.releaseClause(cl);
-
-    char* mem[sizeof(saturnin::Clause)+((sz)*sizeof(saturnin::Lit))];
-    saturnin::Clause* ccl = new (mem) saturnin::Clause(c, sz, sz-1);
-    for(unsigned int i=0; i<sz; i++){
-        CPPUNIT_ASSERT_EQUAL(c[i],ccl->getLit(i));
+    for (unsigned int i = 0; i<sz; i++) {
+        CPPUNIT_ASSERT_EQUAL(c[i], cl->getLit(i));
     }
+    p.releaseClause(cl);
 
 }
 
 void ClauseTest::testClauseSize(){
     //size and index
     size_t expected = sizeof(unsigned int)*2;
+    static_assert(sizeof(saturnin::Clause::compact_t) == 4, "The compact type should not be different than 32 bits.");
     //compact
     expected += sizeof(saturnin::Clause::compact_t);
     //data

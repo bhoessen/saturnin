@@ -24,6 +24,7 @@ along with saturnin.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdio.h>                      // for fprintf, FILE, stdout
 #include <limits>                       // for numeric_limits
 #include "saturnin/Array.h"             // for Array
+#include "saturnin/Clause.h"            // for Clause, watcher_t
 #include "saturnin/ClauseAllocator.h"   // for ClauseAllocator
 #include "saturnin/Fifo.h"              // for Fifo
 #include "saturnin/Heap.h"              // for Heap
@@ -33,8 +34,6 @@ along with saturnin.  If not, see <http://www.gnu.org/licenses/>.
 #include "saturnin/WeakBool.h"          // for wbool, wFalse, wTrue, etc
 #include "saturnin/Assert.h"            // for ASSERT
 #include "saturnin/Saturnin.h"          // for SATURNIN_EXPORT
-namespace saturnin { class Clause; }
-namespace saturnin { struct watcher_t; }
 #ifdef SATURNIN_DB
 #include "saturnin/DBWrapper.h"         // for DBWrapper
 #endif /* SATURNIN_DB */
@@ -116,7 +115,7 @@ namespace saturnin {
          * except the binary ones
          * @return the list of initial clauses of size 3+
          */
-        const Array<Clause*> getInitialClauses() const {
+        const Array<Clause*>& getInitialClauses() const {
             return clauses;
         }
         
@@ -126,7 +125,7 @@ namespace saturnin {
          * @param l a literal we want every binary clause using @a l
          * @return the list of literals that appear in a binary clause with @a l
          */
-        const Array<Lit> getBinaryWith(Lit l) const {
+        const Array<Lit>& getBinaryWith(Lit l) const {
             return binWatched.get(l);
         }
 
@@ -151,7 +150,7 @@ namespace saturnin {
          * Retrieve the total number of restart performed until now
          * @return the total number of restart performed by the solver
          */
-        inline unsigned long int getNbRestarts() const {
+        inline uint64_t getNbRestarts() const {
             return restarts;
         }
 
@@ -159,7 +158,7 @@ namespace saturnin {
          * Retrieve the total number of propagation performed until now
          * @return the total number of propagation performed by the solver
          */
-        inline unsigned long int getNbPropagation() const {
+        inline uint64_t getNbPropagation() const {
             return nbPropag;
         }
 
@@ -167,11 +166,11 @@ namespace saturnin {
          * Retrieve the total number of conflict occured until now
          * @return the total number of conflict occured by the solver
          */
-        inline unsigned long int getNbConflict() const {
+        inline uint64_t getNbConflict() const {
             return conflicts;
         }
 
-        inline unsigned long int getAssignationLevel() const {
+        inline uint64_t getAssignationLevel() const {
             return assignLevel;
         }
 
@@ -363,7 +362,7 @@ namespace saturnin {
          * Retrieve the number of clauses that were removed
          * @return the number of clauses we judged useless during the search
          */
-        inline unsigned long int getNbClausesRemoved() const{
+        inline uint64_t getNbClausesRemoved() const{
             return nbClauseRemoved;
         }
 
@@ -396,7 +395,7 @@ namespace saturnin {
          * removed
          * @return the number of initial clauses that were removed
          */
-        inline unsigned long int getNbInitialClausesRemoved() const{
+        inline uint64_t getNbInitialClausesRemoved() const{
             return nbInitialClausesRemoved;
         }
 
@@ -405,7 +404,7 @@ namespace saturnin {
          * reduced
          * @return the number of initial clauses that were reduced
          */
-        inline unsigned long int getNbInitialClausesReduced() const{
+        inline uint64_t getNbInitialClausesReduced() const{
             return nbInitialClausesReduced;
         }
 
@@ -413,7 +412,7 @@ namespace saturnin {
          * Retrieve the number of pure literals found
          * @return the number of pure literals found
          */
-        inline unsigned long int getNbPureLiteral() const{
+        inline uint64_t getNbPureLiteral() const{
             return nbPureLitFound;
         }
         
@@ -830,7 +829,7 @@ namespace saturnin {
         unsigned int assignLevel;
 
         /** The number of literals removed from the initial problem */
-        unsigned nbLitRemoved;
+        unsigned int nbLitRemoved;
         /**
          * The number of conflict left before we will perform a reduction of the
          * clause database
@@ -845,7 +844,7 @@ namespace saturnin {
         /** The number of reduce that were performed */
         unsigned int nbReducePerformed;
         /** The number of clauses that were removed */
-        unsigned long int nbClauseRemoved;
+        uint64_t nbClauseRemoved;
         
         /** 
          * The number of values taken for the average lbd over some last
@@ -866,11 +865,11 @@ namespace saturnin {
         double stackDifferenceFactor;
 
         /** The current total number of restart performed */
-        unsigned long int restarts;
+        uint64_t restarts;
         /** The current total number of propagations made */
-        unsigned long int nbPropag;
+        uint64_t nbPropag;
         /** The current total number of conflict found */
-        unsigned long int conflicts;
+        uint64_t conflicts;
 
         /**
          * The current known state of the solver. If wTrue: the problem is SAT,
@@ -899,13 +898,13 @@ namespace saturnin {
          * 
          * It will be used to compute the value of literal block distance
          */
-        Array<unsigned long int> levelLBDChecked;
+        Array<uint64_t> levelLBDChecked;
         
         /**
          * Counter used for the computation of the lbd. It needs to be updated
          * each time we compute an lbd, in order to not have side effects
          */
-        unsigned long int lbdTimeStamp;
+        uint64_t lbdTimeStamp;
 
         /**
          * For each lbd value, the number of learnt clauses having that lbd
@@ -941,13 +940,13 @@ namespace saturnin {
         int nbPureLitSearch;
 
         /** The number of pure literals found */
-        unsigned long int nbPureLitFound;
+        uint64_t nbPureLitFound;
 
         /** The number of initial clauses that were reduced */
-        unsigned long int nbInitialClausesReduced;
+        uint64_t nbInitialClausesReduced;
 
         /** The number of initial clauses that were removed */
-        unsigned long int nbInitialClausesRemoved;
+        uint64_t nbInitialClausesRemoved;
 
         /**
          * This variable controls the verbosity of the solver. The higher the

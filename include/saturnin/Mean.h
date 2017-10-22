@@ -71,7 +71,7 @@ namespace saturnin{
          * Retrieve the number of values we added to compute the mean
          * @return the number of values added
          */
-        inline unsigned long int getNbValues() const{
+        inline uint64_t getNbValues() const{
             return nbElements;
         }
         
@@ -80,7 +80,7 @@ namespace saturnin{
         /** The sum of the values added */
         double sum;
         /** The number of elements added */
-        unsigned long int nbElements;
+        uint64_t nbElements;
         
     };
     

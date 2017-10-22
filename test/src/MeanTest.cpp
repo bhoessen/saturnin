@@ -5,7 +5,7 @@ CPPUNIT_TEST_SUITE_REGISTRATION(MeanTest);
 
 void MeanTest::testCreation(){
     saturnin::Mean m;
-    CPPUNIT_ASSERT_EQUAL((unsigned long int)0, m.getNbValues());
+    CPPUNIT_ASSERT_EQUAL((uint64_t)0, m.getNbValues());
 }
     
 void MeanTest::testInsertion(){
@@ -13,7 +13,7 @@ void MeanTest::testInsertion(){
     for(int i=0; i<=10; i++){
         m.addValue(i);
     }
-    CPPUNIT_ASSERT_EQUAL((unsigned long int)11, m.getNbValues());
+    CPPUNIT_ASSERT_EQUAL((uint64_t)11, m.getNbValues());
     
 }
     

@@ -282,12 +282,12 @@ Clause* Solver::addLearntClause(const Array<Lit>& clause) {
 
     ASSERT(clause.getSize() > 0);
     if (clause.getSize() == 1) {
-        enqueue(clause[0]);
+        enqueue(clause[0U]);
         return nullptr;
     } else if (clause.getSize() == 2) {
-        Lit a = clause[0];
+        Lit a = clause[0U];
         Var va = VariablesManager::getVar(a);
-        Lit b = clause[1];
+        Lit b = clause[1U];
         binWatched[a].push(b);
         binWatched[b].push(a);
         nbBin++;
@@ -325,7 +325,7 @@ Clause* Solver::addLearntClause(const Array<Lit>& clause) {
 
         //TODO: check if we must export the clause
 
-        enqueue(clause[0], newClause->lits());
+        enqueue(clause[0U], newClause->lits());
 
         return newClause;
     }
@@ -564,7 +564,7 @@ void Solver::reduce() {
     allocator.clearup();
 
     if (verbosity > 0) {
-        ::printf("c %12ld | %10d | %14d\n",
+        ::printf("c %12" PRIu64 " | %10d | %14d\n",
                 conflicts, learntClauses.getSize(), monowatched);
     }
 
@@ -953,8 +953,8 @@ bool Solver::litRedundant(Lit p, unsigned int abstract_levels, Array<Lit>& analy
     }
     
 #ifdef SATURNIN_DB
-    for(unsigned int i = 0; i < resolvedClauses.getSize(); i++) {
-        db.addResolution(resolvedClauses[i], db.nbClausesAdded());
+    for(const auto *clause : resolvedClauses) {
+        db.addResolution(clause, db.nbClausesAdded());
     }
 #endif /* SATURNIN_DB */
     return true;
@@ -1424,10 +1424,10 @@ wbool Solver::search(int) {
         }
         fprintf(Logger::getStdOutLogger().getOutput(),
 #ifdef SATURNIN_PARALLEL
-                "thread: %4d, nbConflicts: %8ld, prop: %8ld, avg lbd: %5.1f\n",
+                "thread: %4d, nbConflicts: %8" PRIu64 ", prop: %8" PRIu64 ", avg lbd: %5.1f\n",
                 threadId, conflicts, nbPropag, m);
 #else
-                "nbConflicts: %8ld, prop: %8ld, avg lbd: %5.1f\n",
+                "nbConflicts: %8" PRIu64 ", prop: %8" PRIu64 ", avg lbd: %5.1f\n",
                 conflicts, nbPropag, m);
 #endif /* SATURNIN_PARALLEL */ 
     }

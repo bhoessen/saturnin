@@ -86,7 +86,7 @@ namespace saturnin{
          * @param l a literal we want every binary clause using @a l
          * @return the list of literals that appear in a binary clause with @a l
          */
-        const Array<Lit> getBinaryWith(Lit l) const {
+        const Array<Lit>& getBinaryWith(Lit l) const {
             return s.getBinaryWith(l);
         }
         
@@ -95,7 +95,7 @@ namespace saturnin{
          * except the binary ones
          * @return the list of initial clauses of size 3+
          */
-        const Array<Clause*> getInitialClauses() const {
+        const Array<Clause*>& getInitialClauses() const {
             return s.getInitialClauses();
         }
         

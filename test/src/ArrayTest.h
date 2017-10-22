@@ -36,6 +36,8 @@ public:
     CPPUNIT_TEST(testPointers);
     CPPUNIT_TEST(testPushResize);
     CPPUNIT_TEST(testInitializerList);
+    CPPUNIT_TEST(testPopALot);
+    CPPUNIT_TEST(testMemoryUsage);
     CPPUNIT_TEST_SUITE_END();
 
     /**
@@ -99,6 +101,16 @@ public:
      * Test the initializer list
      */
     void testInitializerList();
+
+    /**
+     * Test the range loop implementation
+     */
+    void testRange();
+
+    /**
+     * Test the memory usage of an array
+     */
+    void testMemoryUsage();
 
 };
 

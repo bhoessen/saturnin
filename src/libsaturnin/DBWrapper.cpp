@@ -1,8 +1,8 @@
-#ifdef SATURNIN_DB
-#include <sqlite3.h>
 #include "saturnin/DBWrapper.h"
 #include "saturnin/Logger.h"
 #include "saturnin/VariablesManager.h"
+#ifdef SATURNIN_DB
+#include <sqlite3.h>
 #include <algorithm>
 #include <iosfwd>
 #include <sstream>
@@ -65,8 +65,13 @@ internalDBEngine(nullptr), nbClauses(0), produceLogs(verbose) {
         internalDBEngine = nullptr;
         if (produceLogs)
             fprintf(Logger::getDBLogger().getOutput(),
+#if SQLITE_VERSION_NUMBER > 3007016
                 "c [dblog] Unable to open/create database '%s': %s\n",
                 aDBName, sqlite3_errstr(retVal));
+#else
+                "c [dblog] Unable to open/create database '%s'\n",
+                aDBName);
+#endif
         return;
     }
 
@@ -86,8 +91,12 @@ DBWrapper::~DBWrapper() {
     int returnCode = sqlite3_close(internalDBEngine);
     if (returnCode != SQLITE_OK) {
         fprintf(Logger::getDBLogger().getOutput(),
-                "c [dblog] unable to close the DB: %s (error code: %d)\n",
+               "c [dblog] unable to close the DB: %s (error code: %d)\n",
+#if SQLITE_VERSION_NUMBER > 3007016
                 sqlite3_errstr(returnCode), returnCode);
+#else
+                sqlite3_errmsg(internalDBEngine), returnCode);
+#endif
     }
 }
 
@@ -482,7 +491,11 @@ bool DBWrapper::executeQuery(const char* query, QueryTreatment* treat) {
     }
     if (retVal != SQLITE_OK) {
         fprintf(Logger::getDBLogger().getOutput(),
+#if SQLITE_VERSION_NUMBER > 3007016
                 "c [dblog] error: %s, %s\n", sqlite3_errstr(retVal), errorMessages);
+#else
+                "c [dblog] error: %s, %s\n", sqlite3_errmsg(internalDBEngine), errorMessages);
+#endif
         SATURNIN_TRACE(Logger::getDBLogger());
         sqlite3_free(errorMessages);
         return false;

@@ -11,6 +11,7 @@ void CNFReaderTest::testCreation() {
     saturnin::CNFReader r("test.cnf");
     CPPUNIT_ASSERT_EQUAL((unsigned int) 0, r.getNbVar());
     CPPUNIT_ASSERT_EQUAL((unsigned int) 0, r.getNbClauses());
+    CPPUNIT_ASSERT_EQUAL((unsigned int) 0, r.getMaxLength());
 }
 
 void CNFReaderTest::makeTest(unsigned int nbVar, unsigned int nbClauses,
@@ -35,7 +36,7 @@ void CNFReaderTest::makeTest(unsigned int nbVar, unsigned int nbClauses,
 
     saturnin::CNFReader::CNFReaderErrors error = r.read(nbSectors);
     CPPUNIT_ASSERT_EQUAL_MESSAGE(saturnin::CNFReader::getErrorString(error),
-                                 saturnin::CNFReader::cnfError_noError, error);
+                                 static_cast<int>(saturnin::CNFReader::CNFReaderErrors::cnfError_noError), static_cast<int>(error));
 
     CPPUNIT_ASSERT_EQUAL(nbVar, r.getNbVar());
     CPPUNIT_ASSERT_EQUAL(nbClauses, r.getNbClauses());
@@ -63,7 +64,7 @@ void CNFReaderTest::testNoLFAtEnd() {
     saturnin::CNFReader r(fileName);
     saturnin::CNFReader::CNFReaderErrors error = r.read(1);
     CPPUNIT_ASSERT_EQUAL_MESSAGE(saturnin::CNFReader::getErrorString(error),
-                                 saturnin::CNFReader::cnfError_noError, error);
+                                 static_cast<int>(saturnin::CNFReader::CNFReaderErrors::cnfError_noError), static_cast<int>(error));
 
     CPPUNIT_ASSERT_EQUAL((unsigned int) 2, r.getNbVar());
     CPPUNIT_ASSERT_EQUAL((unsigned int) 1, r.getNbClauses());
@@ -89,10 +90,10 @@ void CNFReaderTest::testNoHeader() {
 
     saturnin::CNFReader r(fileName);
     saturnin::CNFReader::CNFReaderErrors error = r.read(1);
-    CPPUNIT_ASSERT_EQUAL(saturnin::CNFReader::cnfError_noHeader, error);
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(saturnin::CNFReader::CNFReaderErrors::cnfError_noHeader), static_cast<int>(error));
 
     CPPUNIT_ASSERT_EQUAL(std::string("We didn't found the header of the file"),
-                         std::string(saturnin::CNFReader::getErrorString(saturnin::CNFReader::cnfError_noHeader)));
+                         std::string(saturnin::CNFReader::getErrorString(saturnin::CNFReader::CNFReaderErrors::cnfError_noHeader)));
 }
 
 void CNFReaderTest::testWrongHeader() {
@@ -109,7 +110,7 @@ void CNFReaderTest::testWrongHeader() {
 
         saturnin::CNFReader r(fileName);
         saturnin::CNFReader::CNFReaderErrors error = r.read(1);
-        CPPUNIT_ASSERT_EQUAL(saturnin::CNFReader::cnfError_wrongHeader, error);
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(saturnin::CNFReader::CNFReaderErrors::cnfError_wrongHeader), static_cast<int>(error));
     }
 
     {
@@ -125,11 +126,11 @@ void CNFReaderTest::testWrongHeader() {
 
         saturnin::CNFReader r(fileName);
         saturnin::CNFReader::CNFReaderErrors error = r.read(1);
-        CPPUNIT_ASSERT_EQUAL(saturnin::CNFReader::cnfError_wrongHeader, error);
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(saturnin::CNFReader::CNFReaderErrors::cnfError_wrongHeader), static_cast<int>(error));
     }
 
     CPPUNIT_ASSERT_EQUAL(std::string("The values inside the headers aren't legal (integer overflow or negative value)"),
-                         std::string(saturnin::CNFReader::getErrorString(saturnin::CNFReader::cnfError_wrongHeader)));
+                         std::string(saturnin::CNFReader::getErrorString(saturnin::CNFReader::CNFReaderErrors::cnfError_wrongHeader)));
 }
 
 void CNFReaderTest::testWrongLitValue() {
@@ -146,7 +147,7 @@ void CNFReaderTest::testWrongLitValue() {
 
         saturnin::CNFReader r(fileName);
         saturnin::CNFReader::CNFReaderErrors error = r.read(1);
-        CPPUNIT_ASSERT_EQUAL(saturnin::CNFReader::cnfError_wrongLiteralValue, error);
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(saturnin::CNFReader::CNFReaderErrors::cnfError_wrongLiteralValue), static_cast<int>(error));
     }
 
     {
@@ -162,11 +163,11 @@ void CNFReaderTest::testWrongLitValue() {
 
         saturnin::CNFReader r(fileName);
         saturnin::CNFReader::CNFReaderErrors error = r.read(1);
-        CPPUNIT_ASSERT_EQUAL(saturnin::CNFReader::cnfError_wrongLiteralValue, error);
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(saturnin::CNFReader::CNFReaderErrors::cnfError_wrongLiteralValue), static_cast<int>(error));
     }
 
     CPPUNIT_ASSERT_EQUAL(std::string("The number of variable doesn't match a variable declaration"),
-                         std::string(saturnin::CNFReader::getErrorString(saturnin::CNFReader::cnfError_wrongLiteralValue)));
+                         std::string(saturnin::CNFReader::getErrorString(saturnin::CNFReader::CNFReaderErrors::cnfError_wrongLiteralValue)));
 }
 
 void CNFReaderTest::testNoZeroAtEnd() {
@@ -183,7 +184,7 @@ void CNFReaderTest::testNoZeroAtEnd() {
 
         saturnin::CNFReader r(fileName);
         saturnin::CNFReader::CNFReaderErrors error = r.read(1);
-        CPPUNIT_ASSERT_EQUAL(saturnin::CNFReader::cnfError_noZeroEOL, error);
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(saturnin::CNFReader::CNFReaderErrors::cnfError_noZeroEOL), static_cast<int>(error));
     }
 
     {
@@ -199,11 +200,11 @@ void CNFReaderTest::testNoZeroAtEnd() {
 
         saturnin::CNFReader r(fileName);
         saturnin::CNFReader::CNFReaderErrors error = r.read(1);
-        CPPUNIT_ASSERT_EQUAL(saturnin::CNFReader::cnfError_noZeroEOL, error);
+        CPPUNIT_ASSERT_EQUAL(static_cast<int>(saturnin::CNFReader::CNFReaderErrors::cnfError_noZeroEOL), static_cast<int>(error));
     }
 
     CPPUNIT_ASSERT_EQUAL(std::string("There was no '0' at the end of a clause"),
-                         std::string(saturnin::CNFReader::getErrorString(saturnin::CNFReader::cnfError_noZeroEOL)));
+                         std::string(saturnin::CNFReader::getErrorString(saturnin::CNFReader::CNFReaderErrors::cnfError_noZeroEOL)));
 }
 
 void CNFReaderTest::testWrongFile() {
@@ -211,7 +212,7 @@ void CNFReaderTest::testWrongFile() {
 
     saturnin::CNFReader r(fileName);
     saturnin::CNFReader::CNFReaderErrors error = r.read(1);
-    CPPUNIT_ASSERT_EQUAL(saturnin::CNFReader::cnfError_fileReading, error);
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(saturnin::CNFReader::CNFReaderErrors::cnfError_fileReading), static_cast<int>(error));
     CPPUNIT_ASSERT_EQUAL(std::string("There was a problem with the opening of the file"),
                          std::string(saturnin::CNFReader::getErrorString(error)));
 }
@@ -229,7 +230,7 @@ void CNFReaderTest::testClauseMismatch() {
 
     saturnin::CNFReader r(fileName);
     saturnin::CNFReader::CNFReaderErrors error = r.read(1);
-    CPPUNIT_ASSERT_EQUAL(saturnin::CNFReader::cnfError_wrongNbClauses, error);
+    CPPUNIT_ASSERT_EQUAL(static_cast<int>(saturnin::CNFReader::CNFReaderErrors::cnfError_wrongNbClauses), static_cast<int>(error));
     CPPUNIT_ASSERT_EQUAL(std::string("The number of clauses present in the file doesn't match with the header"),
                          std::string(saturnin::CNFReader::getErrorString(error)));
 }

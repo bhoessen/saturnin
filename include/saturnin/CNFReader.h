@@ -38,7 +38,7 @@ namespace saturnin {
          * This enum contains the different errors that can occur during the
          * reading of the file
          */
-        enum CNFReaderErrors{
+        enum class CNFReaderErrors{
             /** No errors where found */
             cnfError_noError,
             /** We didn't find a '0' at the end of the line */

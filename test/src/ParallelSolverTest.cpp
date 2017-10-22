@@ -1,7 +1,7 @@
-#ifdef SATURNIN_PARALLEL
-#include "ParallelSolverTest.h"
 #include "../../include/saturnin/ParallelSolver.h"
 #include "saturnin/Solver.h"
+#ifdef SATURNIN_PARALLEL
+#include "ParallelSolverTest.h"
 
 CPPUNIT_TEST_SUITE_REGISTRATION(ParallelSolverTest);
 
@@ -19,6 +19,7 @@ void ParallelSolverTest::testCreation(){
 
 void ParallelSolverTest::testSimple() {
     saturnin::ParallelSolver ps(2);
+    ps.setVerbosity(0);
     saturnin::CNFReader r("instances/simple.cnf");
     r.read();
     CPPUNIT_ASSERT(!ps.initialize(r));

@@ -21,6 +21,7 @@ along with saturnin.  If not, see <http://www.gnu.org/licenses/>.
 #define	SATURNIN_ASSERT_H
 
 #include <cstdint>
+#include "Saturnin.h"
 
 #ifdef DEBUG
 

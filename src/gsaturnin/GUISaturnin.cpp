@@ -9,8 +9,8 @@
 #pragma warning( disable : 4244 )
 #endif /* WIN32 */
 
-gsaturnin::GUISaturnin::GUISaturnin(int argc, char ** argv) : launcher(argc, argv), propagations("Propagations/sec"), nbClauses("Nb Clauses"), 
-conflicts("Conflicts/sec"), assignLevel("Assign Level"), memory("Usage (Mb)")
+gsaturnin::GUISaturnin::GUISaturnin(int argc, char ** argv) : launcher(argc, argv), propagations("Propagations"), nbClauses("Nb Clauses"), 
+conflicts("Conflicts"), assignLevel("Assign Level"), memory("Usage (Mb)")
 #ifdef PROFILE
 ,profile_propagateMono("Monowatch propagation"),
 profile_propagateBin("Binary propagation"),
@@ -44,7 +44,7 @@ float clause_repartition(void* data, int idx) {
 
 float lbd_repartition(void* data, int idx) {
     auto* solver = static_cast<saturnin::Solver*>(data);
-    return static_cast<float>(solver->getLBDDistribution()[idx]);
+    return static_cast<float>(solver->getLBDDistribution()[static_cast<unsigned int>(idx)]);
 }
 
 float memusage_clausePools(void* data, int idx) {
@@ -133,7 +133,7 @@ void gsaturnin::GUISaturnin::draw() {
             unsigned int nn = n % maxNBVarVisible;
             float xp = x + (sz + spacing)*(nn % nbPerRow);
             float yp = y + (sz + spacing)*(nn / nbPerRow);
-            draw_list->AddRect(ImVec2(xp, yp), ImVec2(xp + sz, yp + sz), colors[solver->getVarValue(n)], 0.0f, ~0, thickness); 
+            draw_list->AddRect(ImVec2(xp, yp), ImVec2(xp + sz, yp + sz), colors[static_cast<int>(solver->getVarValue(n))], 0.0f, ~0, thickness); 
         }
     }
 

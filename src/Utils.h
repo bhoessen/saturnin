@@ -97,13 +97,13 @@ namespace saturnin {
 #define SATURNIN_STOP_PROFILE(start, end) end = __rdtsc() - start;
 #define SATURNIN_END_PROFILE(v) v += __rdtsc() - _saturnin__smsvc_rdtsc_;
 #else
-__inline__ unsigned long __saturnin__get_cycles_count_() {
+__inline__ uint64_t __saturnin__get_cycles_count_() {
     unsigned a, d;
     asm volatile("rdtsc" : "=a" (a), "=d" (d));
-    return ((unsigned long) a) | (((unsigned long) d) << 32);
+    return ((uint64_t) a) | (((uint64_t) d) << 32);
 }
 
-#define SATURNIN_BEGIN_PROFILE unsigned long int __saturnin__sgcc__ = __saturnin__get_cycles_count_();
+#define SATURNIN_BEGIN_PROFILE uint64_t __saturnin__sgcc__ = __saturnin__get_cycles_count_();
 #define SATURNIN_END_PROFILE(v) v += __saturnin__get_cycles_count_() - __saturnin__sgcc__;
 #endif
 #else

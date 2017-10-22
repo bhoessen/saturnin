@@ -45,8 +45,17 @@ int main(int , char** ){
         "not compiled"
 #endif
     );
+    printf("Profile information: %s\n",
+#ifdef PROFILE
+        "compiled"
+#else
+        "not compiled"
+#endif
+    );
     bool success = runner.run();
+#ifdef DEBUG
     printf("Nb of assert performed: %" PRIu64 "\n",NB_ASSERTED);
+#endif /* DEBUG */
     if(success){
         return EXIT_SUCCESS;
     }else{

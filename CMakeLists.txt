@@ -6,6 +6,9 @@ set (CMAKE_CXX_STANDARD 11)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 find_package (sqlite3)
 find_package (cppunit)
+find_package (OpenGL)
+find_package (SDL2)
+include (Valgrind)
 
 #specify the include directory
 include_directories("include")
@@ -29,6 +32,10 @@ target_compile_definitions(saturnins-bin PRIVATE SATURNIN_LIBRARY_COMPILE)
 set_target_properties(saturnins-bin PROPERTIES OUTPUT_NAME saturnins)
 
 add_library(saturnins SHARED ${saturnin_sources})
+# add pthread to saturnins
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+target_link_libraries(saturnins-bin Threads::Threads)
 target_compile_definitions(saturnins PRIVATE SATURNIN_LIBRARY_COMPILE)
 target_compile_definitions(saturnins PRIVATE SATURNIN_PARALLEL)
 
@@ -54,17 +61,27 @@ if (SQLITE3_FOUND)
   
 endif (SQLITE3_FOUND)
 
-if (WIN32)
+
+if (WIN32 OR SDL2_FOUND)
   file(GLOB gsaturnin_sources ./src/gsaturnin/*.cpp)
   file(GLOB imgui_sources ./src/imgui/*.cpp)
   add_executable(gsaturnin-bin ${saturnin_sources} ${gsaturnin_sources} ${imgui_sources})
   set_target_properties(gsaturnin-bin PROPERTIES OUTPUT_NAME gsaturnin)
   target_compile_definitions(gsaturnin-bin PRIVATE SATURNIN_LIBRARY_COMPILE)
   target_compile_definitions(gsaturnin-bin PRIVATE PROFILE)
-  target_link_libraries(gsaturnin-bin d3d9)
-endif (WIN32)
+  if (WIN32)
+    target_link_libraries(gsaturnin-bin d3d9)
+  else (WIN32)
+    target_compile_definitions(gsaturnin-bin PRIVATE USING_SDL)
+    target_include_directories(gsaturnin-bin PRIVATE ${SDL2_INCLUDE_DIRS})
+    target_link_libraries(gsaturnin-bin ${SDL2_LIBRARIES}) 
+	message(STATUS "OpenGL libraries: " ${OPENGL_LIBRARIES})
+	target_include_directories(gsaturnin-bin PRIVATE ${OPENGL_INGLUDE_DIRS})
+	target_link_libraries(gsaturnin-bin ${OPENGL_LIBRARIES})
+  endif (WIN32)
+endif (WIN32 OR SDL2_FOUND)
 
-IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+IF(${CMAKE_BUILD_TYPE} MATCHES "Debug" OR ${CMAKE_BUILD_TYPE} MATCHES "Coverage")
   add_definitions(-DDEBUG)
   add_definitions(-DPROFILE)
   if (CMAKE_COMPILER_IS_GNUCXX)
@@ -80,6 +97,7 @@ IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 	#add the cppunit dependency
 	target_include_directories(saturnin-test PRIVATE ${CPPUNIT_INCLUDE_DIRS})
 	target_link_libraries (saturnin-test ${CPPUNIT_LIBRARIES})
+	#add the sqlite dependency
     if (SQLITE3_FOUND)
 	  target_compile_definitions(saturnin-test PRIVATE SATURNIN_DB)
 	  target_include_directories(saturnin-test PRIVATE ${SQLITE3_INCLUDE_DIRS})
@@ -90,6 +108,18 @@ IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 	  add_dependencies(saturnin-test saturnins)
 	  target_link_libraries (saturnin-test saturnins)
 	endif (SQLITE3_FOUND)
+	#create the coverage target
+	IF(${CMAKE_BUILD_TYPE} MATCHES "Coverage" AND CMAKE_COMPILER_IS_GNUCXX)
+	  include(CodeCoverage)
+	  APPEND_COVERAGE_COMPILER_FLAGS()
+	  set(COVERAGE_EXCLUDES '${CMAKE_CURRENT_SOURCE_DIR}/test/src/*' '${CMAKE_CURRENT_SOURCE_DIR}/include/imgui/*' '${CMAKE_CURRENT_SOURCE_DIR}/src/imgui/*' '${CMAKE_CURRENT_SOURCE_DIR}/src/gsaturnin/*' '/usr/*')
+	  SETUP_TARGET_FOR_COVERAGE(NAME saturnin-coverage DEPENDENCIES saturnin-test EXECUTABLE ${CMAKE_BINARY_DIR}/saturnin-test)
+	ENDIF(${CMAKE_BUILD_TYPE} MATCHES "Coverage" AND CMAKE_COMPILER_IS_GNUCXX)
+	
+	IF (${VALGRIND_FOUND})
+	  message(STATUS "Creating valgrind target")
+	  SETUP_TARGET_FOR_VALGRIND(NAME saturnin-valgrind DEPENDENCIES saturnin-test EXECUTABLE ${CMAKE_BINARY_DIR}/saturnin-test)
+	ENDIF ()
 	
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/test/instances/all.used-as.sat04-986.simplified.cnf ${CMAKE_CURRENT_BINARY_DIR}/instances/all.used-as.sat04-986.simplified.cnf)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/test/instances/dp04s04.shuffled.cnf                 ${CMAKE_CURRENT_BINARY_DIR}/instances/dp04s04.shuffled.cnf)
@@ -120,9 +150,10 @@ IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
   elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
     # Update if necessary
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic -Werror")
+	
   endif()
   
-ENDIF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+ENDIF(${CMAKE_BUILD_TYPE} MATCHES "Debug" OR ${CMAKE_BUILD_TYPE} MATCHES "Coverage")
 
 if (${CMAKE_BUILD_TYPE} MATCHES "Release")
   if (CMAKE_COMPILER_IS_GNUCXX)

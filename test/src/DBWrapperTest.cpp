@@ -19,7 +19,7 @@ public:
 
     ~DBHelper() {
         if (internalDBEngine != NULL) {
-            sqlite3_close_v2(internalDBEngine);
+            sqlite3_close(internalDBEngine);
         }
     }
 

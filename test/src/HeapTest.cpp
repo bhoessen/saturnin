@@ -158,26 +158,6 @@ void HeapTest::testUpdate() {
 
 }
 
-void HeapTest::testCopy() {
-    unsigned int heapSize = 42;
-    saturnin::Heap<saturnin::Var> h(heapSize, {});
-    for (unsigned int i = 0; i < heapSize; i++) {
-        h.add(i);
-    }
-
-    saturnin::Heap<saturnin::Var> b(h);
-    saturnin::Heap<saturnin::Var> c(64, {});
-    c = h;
-    CPPUNIT_ASSERT_EQUAL(h.getSize(), b.getSize());
-    CPPUNIT_ASSERT_EQUAL(h.getSize(), c.getSize());
-    for (unsigned int i = 0; i < heapSize; i++) {
-        saturnin::Var v = h.removeMin();
-        CPPUNIT_ASSERT_EQUAL(v, b.removeMin());
-        CPPUNIT_ASSERT_EQUAL(v, c.removeMin());
-    }
-
-}
-
 void HeapTest::testPresent() {
     unsigned int heapSize = 3;
     saturnin::Array<double> values(heapSize);

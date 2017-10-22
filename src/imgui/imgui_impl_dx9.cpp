@@ -6,6 +6,8 @@
 // If you are new to ImGui, see examples/README.txt and documentation at the top of imgui.cpp.
 // https://github.com/ocornut/imgui
 
+#ifdef WIN32
+
 #include <imgui/imgui.h>
 #include "imgui_impl_dx9.h"
 
@@ -354,3 +356,6 @@ void ImGui_ImplDX9_NewFrame()
     // Start the frame
     ImGui::NewFrame();
 }
+
+
+#endif //WIN32

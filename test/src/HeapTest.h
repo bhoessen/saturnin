@@ -31,7 +31,6 @@ public:
     CPPUNIT_TEST(testOperator);
     CPPUNIT_TEST(testGetMin);
     CPPUNIT_TEST(testUpdate);
-    CPPUNIT_TEST(testCopy);
     CPPUNIT_TEST(testPresent);
     CPPUNIT_TEST(testContainLong);
     CPPUNIT_TEST_SUITE_END();
@@ -60,11 +59,6 @@ public:
      * Check the update of a value present in the heap
      */
     void testUpdate();
-
-    /**
-     * Check the copy of the heaps
-     */
-    void testCopy();
     
     /**
      * Re-create a bug found

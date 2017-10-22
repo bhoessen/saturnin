@@ -98,8 +98,8 @@ namespace saturnin{
          */
         inline size_t getMemoryFootprint() const{
             size_t mem = pools.getMemoryFootprint();
-            for(unsigned int i=0; i<pools.getSize(); i++){
-                mem += pools[i]->getMemoryFootprint();
+            for(const auto *poolPtr : pools){
+                mem += poolPtr->getMemoryFootprint();
             }
 #ifdef PROFILE
             mem += clauseRepartition.getMemoryFootprint();

@@ -9,6 +9,7 @@ before_install:
 script: 
  - mkdir -p ./build/gcc/Debug
  - mkdir -p ./build/gcc/Release
+ - mkdir -p ./build/gcc/Coverage
  - cd build/gcc/Debug
  - cmake ../../.. -DCMAKE_BUILD_TYPE=Debug
  - make
@@ -19,6 +20,10 @@ script:
  - cmake ../../..
  - make
  - cd ../../..
+ - cd build/gcc/Coverage
+ - cmake ../../.. -DCMAKE_BUILD_TYPE=Coverage
+ - make saturnin-coverage
+ - cp -R saturnin-coverage ../../../docs/coverage
  
 deploy:
   provider: pages

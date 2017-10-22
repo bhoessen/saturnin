@@ -1,7 +1,8 @@
-#ifdef SATURNIN_PARALLEL
-
 #include "saturnin/ParallelSolver.h"
 #include "saturnin/Solver.h"
+
+#ifdef SATURNIN_PARALLEL
+
 #include <thread>
 #include <stdio.h>
 #include <sstream>

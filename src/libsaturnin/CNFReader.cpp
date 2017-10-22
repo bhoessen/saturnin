@@ -33,13 +33,13 @@ const char* cnfError_unknwown = "Unknown error";
 
 const char* CNFReader::getErrorString(CNFReader::CNFReaderErrors error) {
     switch (error) {
-        case cnfError_noError: return cnfError_noError_str;
-        case cnfError_noZeroEOL: return cnfError_noZeroEOL_str;
-        case cnfError_fileReading: return cnfError_fileReading_str;
-        case cnfError_noHeader: return cnfError_noHeader_str;
-        case cnfError_wrongHeader: return cnfError_wrongHeader_str;
-        case cnfError_wrongLiteralValue: return cnfError_wrongLiteralValue_str;
-        case cnfError_wrongNbClauses: return cnfError_wrongNbClauses_str;
+        case CNFReaderErrors::cnfError_noError: return cnfError_noError_str;
+        case CNFReaderErrors::cnfError_noZeroEOL: return cnfError_noZeroEOL_str;
+        case CNFReaderErrors::cnfError_fileReading: return cnfError_fileReading_str;
+        case CNFReaderErrors::cnfError_noHeader: return cnfError_noHeader_str;
+        case CNFReaderErrors::cnfError_wrongHeader: return cnfError_wrongHeader_str;
+        case CNFReaderErrors::cnfError_wrongLiteralValue: return cnfError_wrongLiteralValue_str;
+        case CNFReaderErrors::cnfError_wrongNbClauses: return cnfError_wrongNbClauses_str;
         default: return cnfError_unknwown;
     }
 }
@@ -58,11 +58,11 @@ CNFReader::~CNFReader() {
 
 CNFReader::CNFReaderErrors CNFReader::read(unsigned int nbBlocks) {
     if (inputFile == nullptr) {
-        return cnfError_fileReading;
+        return CNFReaderErrors::cnfError_fileReading;
     }
     FileReader reader(inputFile, nbBlocks);
 
-    CNFReaderErrors error = cnfError_noError;
+    CNFReaderErrors error = CNFReaderErrors::cnfError_noError;
     //Read comments and the header
     int64_t nbClauses = 0;
     bool headerFound = false;
@@ -73,14 +73,14 @@ CNFReader::CNFReaderErrors CNFReader::read(unsigned int nbBlocks) {
         if (lineLength > 0 && line[0] != 'c') {
             //we need a 'p cnf' line
             if (lineLength < 5 || strncmp(line, "p cnf", 5) != 0) {
-                error = cnfError_noHeader;
+                error = CNFReaderErrors::cnfError_noHeader;
             } else {
                 line += 5;
                 const char* tmp;
                 int nbRead = 0;
                 int64_t value = strntol(line, &tmp, endOfLine - line, nbRead);
                 if (value < 0 || nbRead == 0 || (value == 0) || value > static_cast<int64_t>(std::numeric_limits<unsigned int>::max())) {
-                    error = cnfError_wrongHeader;
+                    error = CNFReaderErrors::cnfError_wrongHeader;
                 } else {
                     nbVar = (unsigned int) value;
                 }
@@ -89,7 +89,7 @@ CNFReader::CNFReaderErrors CNFReader::read(unsigned int nbBlocks) {
                 nbRead = 0;
                 value = strntol(line, &tmp, endOfLine - line, nbRead);
                 if (value < 0 || nbRead == 0 || (value == 0) || value > (int64_t) std::numeric_limits<unsigned int>::max()) {
-                    error = cnfError_wrongHeader;
+                    error = CNFReaderErrors::cnfError_wrongHeader;
                 } else {
                     nbClauses = value;
                 }
@@ -98,32 +98,33 @@ CNFReader::CNFReaderErrors CNFReader::read(unsigned int nbBlocks) {
 
             }
         }
-    } while (!headerFound && error == cnfError_noError && !reader.isEOF());
+    } while (!headerFound && error == CNFReaderErrors::cnfError_noError && !reader.isEOF());
 
-    if (error != cnfError_noError) {
+    if (error != CNFReaderErrors::cnfError_noError) {
         return error;
     }else if (!headerFound){
-        return cnfError_noHeader;
+        return CNFReaderErrors::cnfError_noHeader;
     }
 
+    //create initial place for a clause of size 4 in order to 
+    //reduce the total memory used
+    Array<Lit> currentClause(4);
     do {
         const char* line;
         unsigned int lineLength = reader.getNextLine(line);
         const char* endOfLine = line + lineLength;
         //make sure the next line isn't empty nor is a comment
         if (lineLength > 0 && line[0] != 'c') {
+            ASSERT(currentClause.getSize() == 0U);
             const char* end = line + lineLength;
-            //create initial place for a clause of size 4 in order to 
-            //reduce the total memory used
-            Array<Lit> currentClause(4);
             bool zeroFound = false;
-            while (error == cnfError_noError && line < end) {
+            while (error == CNFReaderErrors::cnfError_noError && line < end) {
                 const char* tmp;
                 int nbRead = 0;
                 int64_t value = strntol(line, &tmp, endOfLine - line, nbRead);
                 if (SAT_ABS(value) > (int64_t)std::numeric_limits<unsigned int>::max()) {
                     //we avoid an integer overflow
-                    error = cnfError_wrongLiteralValue;
+                    error = CNFReaderErrors::cnfError_wrongLiteralValue;
                     line = end;
                 } else if (nbRead == 0){
                     line = end;
@@ -134,7 +135,7 @@ CNFReader::CNFReaderErrors CNFReader::read(unsigned int nbBlocks) {
                     bool sign = value > 0 ? true : false;
                     Var v = static_cast<Var>(SAT_ABS(value) - 1);
                     if (v > nbVar) {
-                        error = cnfError_wrongLiteralValue;
+                        error = CNFReaderErrors::cnfError_wrongLiteralValue;
                     } else {
                         Lit a = VariablesManager::getLit(v, sign);
                         currentClause.push(a);
@@ -144,13 +145,14 @@ CNFReader::CNFReaderErrors CNFReader::read(unsigned int nbBlocks) {
             }
             if (currentClause.getSize() > 0) {
                 if (!zeroFound) {
-                    error = cnfError_noZeroEOL;
+                    error = CNFReaderErrors::cnfError_noZeroEOL;
                 }
-                if (error == cnfError_noError) {
-                    clauses.push(currentClause);
-                    lengthSum += currentClause.getSize();
-                    if(currentClause.getSize() > maxLength) {
-                        maxLength = currentClause.getSize();
+                if (error == CNFReaderErrors::cnfError_noError) {
+                    unsigned int size = currentClause.getSize();
+                    clauses.push(std::move(currentClause));
+                    lengthSum += size;
+                    if(size > maxLength) {
+                        maxLength = size;
                     }
                 }
             }
@@ -161,13 +163,13 @@ CNFReader::CNFReaderErrors CNFReader::read(unsigned int nbBlocks) {
             int64_t value = strntol(line, &tmp, endOfLine - line, nbRead);
             if (SAT_ABS(value) > (int64_t) std::numeric_limits<unsigned int>::max()) {
                 //we avoid an integer overflow
-                error = cnfError_wrongLiteralValue;
+                error = CNFReaderErrors::cnfError_wrongLiteralValue;
             } else if (nbRead != 0 && value != 0) {
                 {
                     bool sign = value > 0 ? true : false;
                     Var v = static_cast<Var>(SAT_ABS(value) - 1);
                     if (v > nbVar) {
-                        error = cnfError_wrongLiteralValue;
+                        error = CNFReaderErrors::cnfError_wrongLiteralValue;
                     } else {
                         Lit a = VariablesManager::getLit(v, sign);
                         presumptions.push(a);
@@ -176,12 +178,12 @@ CNFReader::CNFReaderErrors CNFReader::read(unsigned int nbBlocks) {
                 }
             }
         }
-    } while (error == cnfError_noError && !reader.isEOF());
+    } while (error == CNFReaderErrors::cnfError_noError && !reader.isEOF());
     
     memoryToRead += reader.getMemoryFootprint();
 
-    if (error == cnfError_noError && nbClauses != (long) clauses.getSize()) {
-        return cnfError_wrongNbClauses;
+    if (error == CNFReaderErrors::cnfError_noError && nbClauses != (long) clauses.getSize()) {
+        return CNFReaderErrors::cnfError_wrongNbClauses;
     }
 
     return error;
